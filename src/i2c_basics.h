@@ -18,4 +18,5 @@ esp_err_t i2c_read_bytes(int i2c_num, uint8_t dev_addr, uint8_t reg_addr, uint8_
 
 void i2c_master_init(int i2c_num, int sda_io, int scl_io, uint32_t clk_speed);
 
+
 #endif

@@ -1,6 +1,8 @@
 #ifndef __IMU_H
 #define __IMU_H
 
+#include "types.h"
+
 #define MPU9265_ADDR                0x68
 #define MPU9265_WHO_AM_I_REG        0x75
 #define MPU9265_PWR_MGMT_1_REG      0x6B
@@ -19,5 +21,8 @@
 #define QMC5883L_SET_RESET 0x0B
 
 void qmc5883l_init(void);
-
+Vector3f read_accel();
+Vector3f read_gyro();
+Vector3f read_magne();
+void calibrate_gyro();
 #endif
