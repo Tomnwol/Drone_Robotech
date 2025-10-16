@@ -87,7 +87,8 @@ void mpu9265_task(void *pvParameter) {
             debug_counter = 0;
             //printf("Accel[g]: X=%.2f Y=%.2f Z=%.2f | Gyro[dps]: X=%.2f Y=%.2f Z=%.2f\n", accel_vect.x, accel_vect.y, accel_vect.z, gyro_vect.x, gyro_vect.y, gyro_vect.z);
             //ESP_LOGI(TAG, "XAccel[g]: X=%.2f Y=%.2f Z=%.2f | Gyro[dps]: X=%.2f Y=%.2f Z=%.2f", mean_tab(tab_acce[0], SIZE_TAB), mean_tab(tab_acce[1], SIZE_TAB), mean_tab(tab_acce[2], SIZE_TAB), mean_tab(tab_gyro[0], SIZE_TAB), mean_tab(tab_gyro[1], SIZE_TAB), mean_tab(tab_gyro[2], SIZE_TAB));
-            //ESP_LOGI(TAG, "Magne: X=%.2f Y=%.2f Z=%.2f",magne_norm.x, magne_norm.y, magne_norm.z);
+            //printf("Gyro: X=%.2f Y=%.2f Z=%.2f\n",mean_tab(tab_gyro[0], SIZE_TAB), mean_tab(tab_gyro[1], SIZE_TAB), mean_tab(tab_gyro[2], SIZE_TAB));
+            //printf("Magne: X=%.2f Y=%.2f Z=%.2f\n",mean_tab(tab_magne[0], SIZE_TAB), mean_tab(tab_magne[1], SIZE_TAB), mean_tab(tab_magne[2], SIZE_TAB));
         }
         
         MadgwickAHRSupdate(sampleFreqLocal, mean_tab(tab_gyro[0], SIZE_TAB), mean_tab(tab_gyro[1], SIZE_TAB), mean_tab(tab_gyro[2], SIZE_TAB), mean_tab(tab_acce[0], SIZE_TAB), mean_tab(tab_acce[1], SIZE_TAB), mean_tab(tab_acce[2], SIZE_TAB), mean_tab(tab_magne[0], SIZE_TAB), mean_tab(tab_magne[1], SIZE_TAB), mean_tab(tab_magne[2], SIZE_TAB));
