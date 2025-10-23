@@ -84,9 +84,9 @@ Vector3f read_magne() {
         int16_t magne_z = (raw_magne[5] << 8) | raw_magne[4];
         //Hard Iron, valeurs trouvées expérimentalement servant à régler les problèmes de détection magnétique
         //Procédure pour obtenir ces valeurs | Axe Z doit être ~0 à plat. Pour l'axe X et Y, il faut repérer deux extremums pour essayer de voir si le capteur voir globalement trop de positif ou trop de négatif. Il faut garder en tête qu'une rotation de 180° autour de Z doit donner la valeur opposé sur X et Y. Exemple : x vaut 25 si on tourne le capteur de 180°, la valeur lue doit désormais être d'environ -25 
-        magne_x -= 610;
-        magne_y += 820;
-        magne_z += 1360;
+        magne_x += 20;
+        magne_y -= 1005;
+        magne_z += 242;
 
         return     (Vector3f){ (float)magne_x, (float)magne_y, (float)magne_z };
 }
