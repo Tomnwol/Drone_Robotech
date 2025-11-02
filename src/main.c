@@ -56,7 +56,7 @@ Vector3f up_vector(){
     return (Vector3f){u_x, u_y, u_z};
 }
 
-void mpu9265_task(void *pvParameter) {
+void fc_task(void *pvParameter) {
     // Wake up MPU9265
     i2c_write_byte(I2C_MASTER_0_PORT, MPU9265_ADDR, MPU9265_PWR_MGMT_1_REG, 0x00);
     
@@ -86,35 +86,17 @@ void mpu9265_task(void *pvParameter) {
             tab_acce[0][0] = passe_bas(tab_acce[0][0], tab_acce[0][1], dt, w0);
         }*/
         Vector3f gyro_vect = read_gyro();
-        
-        
-        
         fill_queue(tab_gyro[0], SIZE_TAB, gyro_vect.x);
         fill_queue(tab_gyro[1], SIZE_TAB, gyro_vect.y);
         fill_queue(tab_gyro[2], SIZE_TAB, gyro_vect.z);
-        /*if (tab_gyro[0][1] != 0.0 || initialized_gyro == 1){
-            initialized_gyro = 1;
-            tab_gyro[0][0] = passe_bas(tab_gyro[0][0], tab_gyro[0][1], dt, w0);
-        }*/
-        
         // Lecture Magnétomètre | faire une fonction qui renvoie un Vector3f ?
-
         Vector3f magne_vect = read_magne();
-
         fill_queue(tab_magne[0], SIZE_TAB, magne_vect.x);
         fill_queue(tab_magne[1], SIZE_TAB, magne_vect.y);
         fill_queue(tab_magne[2], SIZE_TAB, magne_vect.z);
-        /*if (tab_magne[0][1] != 0.0 || initialized_magne == 1){
-            initialized_magne = 1;
-            tab_magne[0][0] = passe_bas(tab_magne[0][0], tab_magne[0][1], dt, w0);
-        }*/
-        // Conversion en Micro tesla possible, voir doc
-        
-        
-        
 
         MadgwickAHRSupdate(sampleFreqLocal, mean_tab(tab_gyro[0], SIZE_TAB), mean_tab(tab_gyro[1], SIZE_TAB), mean_tab(tab_gyro[2], SIZE_TAB), mean_tab(tab_acce[0], SIZE_TAB), mean_tab(tab_acce[1], SIZE_TAB), mean_tab(tab_acce[2], SIZE_TAB), mean_tab(tab_magne[0], SIZE_TAB), mean_tab(tab_magne[1], SIZE_TAB), mean_tab(tab_magne[2], SIZE_TAB));   
-        //printf("%f,%f,%f,%f\n", q0, q1, q2, q3); // Envoi la donnée 
+        printf("%f,%f,%f,%f\n", q0, q1, q2, q3); // Envoi la donnée 
         Vector3f error = up_vector();
         //en prenant le vector x magnetometre comme devant du drone
         int PWM_FR = 512 + (int)(error.x * 200) + (int)(error.y * 200);
@@ -128,7 +110,7 @@ void mpu9265_task(void *pvParameter) {
             //ESP_LOGI(TAG, "XAccel[g]: X=%.2f Y=%.2f Z=%.2f | Gyro[dps]: X=%.2f Y=%.2f Z=%.2f", mean_tab(tab_acce[0], SIZE_TAB), mean_tab(tab_acce[1], SIZE_TAB), mean_tab(tab_acce[2], SIZE_TAB), mean_tab(tab_gyro[0], SIZE_TAB), mean_tab(tab_gyro[1], SIZE_TAB), mean_tab(tab_gyro[2], SIZE_TAB));
             //printf("Gyro: X=%.2f Y=%.2f Z=%.2f\n",mean_tab(tab_gyro[0], SIZE_TAB), mean_tab(tab_gyro[1], SIZE_TAB), mean_tab(tab_gyro[2], SIZE_TAB));
             //printf("Magne: X=%.2f Y=%.2f Z=%.2f\n",mean_tab(tab_magne[0], SIZE_TAB), mean_tab(tab_magne[1], SIZE_TAB), mean_tab(tab_magne[2], SIZE_TAB));
-            printf("%f,%f,%f\n", error.x, error.y, error.z);
+            //printf("%f,%f,%f\n", error.x, error.y, error.z);
         }
         vTaskDelay(pdMS_TO_TICKS((int)(0.02*1000)));
     }
@@ -139,5 +121,5 @@ void app_main(void) {
     i2c_master_init(I2C_NUM_0, I2C_MASTER_0_SDA_IO, I2C_MASTER_0_SCL_IO, I2C_MASTER_0_FREQ_HZ);
     i2c_master_init(I2C_NUM_1, I2C_MASTER_1_SDA_IO, I2C_MASTER_1_SCL_IO, I2C_MASTER_1_FREQ_HZ);
     qmc5883l_init();
-    xTaskCreate(mpu9265_task, "mpu9265_task", 4096, NULL, 5, NULL);
+    xTaskCreate(fc_task, "fc_task", 4096, NULL, 5, NULL);
 }
