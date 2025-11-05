@@ -7,4 +7,11 @@ typedef struct {
     float z;
 } Vector3f;
 
+typedef struct {
+    float w;
+    float x;
+    float y;
+    float z;
+} Quaternion;
+
 #endif
