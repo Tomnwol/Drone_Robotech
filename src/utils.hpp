@@ -1,6 +1,6 @@
 #ifndef __UTILS__H
 #define __UTILS__H
-#include "types.h"
+#include "types.hpp"
 
 float passe_bas(float value, float last_filtered_value, float dt, float w0);
 void fill_tab(float * tab, int size_tab);

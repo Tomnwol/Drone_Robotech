@@ -1,11 +1,6 @@
-#include "types.h"
-#include "driver/i2c.h"
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_log.h"
-#include "i2c_basics.h"
-#include "imu.h"
+#include "types.hpp"
+#include "i2c_basics.hpp"
+#include "imu.hpp"
 
 
 #define PI 3.14159265
@@ -49,7 +44,17 @@ void calibrate_gyro() {
     gyro_offset.y = (float)sum_y / samples;
     gyro_offset.z = (float)sum_z / samples;
 
-    //ESP_LOGI(TAG, "Calibration gyro -> offset: X=%.2f Y=%.2f Z=%.2f", gyro_offset_x, gyro_offset_y, gyro_offset_z);
+    //printf("Calibration gyro -> offset: X=%.2f Y=%.2f Z=%.2f", gyro_offset.x, gyro_offset.y, gyro_offset.z);
+}
+
+bool isMagnePresent() {
+    Wire.beginTransmission(QMC5883L_ADDR); // ou adresse 0x0D selon ton driver
+    return (Wire.endTransmission() == 0);
+}
+
+bool isMPUPresent() {
+    Wire.beginTransmission(MPU9265_ADDR); // ou adresse 0x0D selon ton driver
+    return (Wire.endTransmission() == 0);
 }
 
 Vector3f read_accel() {
@@ -83,24 +88,24 @@ Vector3f read_magne() {
         int16_t magne_y = (raw_magne[3] << 8) | raw_magne[2];
         int16_t magne_z = (raw_magne[5] << 8) | raw_magne[4];
 
-        float hard_iron_bias_x =   -14.092505307175724 ;
-        float hard_iron_bias_y =   732.1141683831913 ;
-        float hard_iron_bias_z =   -714.4415414077869 ;
+        float hard_iron_bias_x =    -24.038358194432362 ;
+        float hard_iron_bias_y =    985.4250746033433 ;
+        float hard_iron_bias_z =   -999.8284176880061 ;
 
 
-        double soft_iron_bias_xx = 2.1729320914696246 ;
-        double soft_iron_bias_xy =  0.08319794986580793 ;
-        double soft_iron_bias_xz =  0.035064382876120764 ;
+        double soft_iron_bias_xx =  2.014798938280882;
+        double soft_iron_bias_xy =  -0.019128925174577656;
+        double soft_iron_bias_xz =  0.23379537869127182 ;
 
 
-        double soft_iron_bias_yx =   0.08319794986580807 ;
-        double soft_iron_bias_yy =   1.6228055535235297;
-        double soft_iron_bias_yz =  0.4682315399054801 ;
+        double soft_iron_bias_yx =    -0.019128925174577694 ;
+        double soft_iron_bias_yy =   2.1365574744782254;
+        double soft_iron_bias_yz =   0.025649583245777086 ;
 
 
-        double soft_iron_bias_zx =  0.035064382876120855 ;
-        double soft_iron_bias_zy =  0.4682315399054797 ;
-        double soft_iron_bias_zz =  1.48724612402111 ;
+        double soft_iron_bias_zx =  0.23379537869127184;
+        double soft_iron_bias_zy =  0.025649583245776868;
+        double soft_iron_bias_zz =  2.220195066523051;
         
         // get values x,y,z and subtract the hard iron offset
         float xm_off = (float)magne_x - hard_iron_bias_x;
@@ -117,6 +122,7 @@ Vector3f read_magne() {
         //magne_x += 20;
         //magne_y -= 1025;
         //magne_z += 242;
+        //return     (Vector3f){ (float)magne_x, (float)magne_y, (float)magne_z };
         return     (Vector3f){ (float)0, (float)0, (float)0 };
         //return     (Vector3f){ (float)xm_cal, (float)ym_cal, (float)zm_cal };
 }

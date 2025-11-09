@@ -1,9 +1,10 @@
-#include "types.h"
-#include "utils.h"
+#include "types.hpp"
+#include "utils.hpp"
 
-float passe_bas(float value, float last_filtered_value, float dt, float w0){ //diverge is w0*dt est trop grand
-    float s1 = w0*dt*(value-last_filtered_value) + last_filtered_value;
-    return(s1);
+float passe_bas(float value, float last_filtered_value, float dt, float f_c){
+    float RC = 1.0f / (2.0f * 3.141592653f * f_c);
+    float alpha = dt / (RC + dt);
+    return last_filtered_value + alpha * (value - last_filtered_value);
 }
 
 void fill_tab(float * tab, int size_tab){

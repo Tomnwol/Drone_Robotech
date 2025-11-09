@@ -1,7 +1,6 @@
-#ifndef __IMU_H
-#define __IMU_H
-
-#include "types.h"
+#pragma once
+#include <Arduino.h>
+#include "types.hpp"
 
 #define MPU9265_ADDR                0x68
 #define MPU9265_WHO_AM_I_REG        0x75
@@ -25,4 +24,6 @@ Vector3f read_accel();
 Vector3f read_gyro();
 Vector3f read_magne();
 void calibrate_gyro();
-#endif
+
+bool isMagnePresent();
+bool isMPUPresent();
