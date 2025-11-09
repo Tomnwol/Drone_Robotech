@@ -105,11 +105,7 @@ void fc_task() {
         float Kp_att = 4.0f;
         omega_set = vec_scale(att_e, Kp_att);
 
-        debug_counter++;
-        if (debug_counter >= 10) {
-            debug_counter = 0;
-            Serial.printf("%f,%f,%f,%f\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z);
-        }
+        
     }
 
     Vector3f err_ang_rate = vec_sub(omega_set, (Vector3f){tab_gyro[0][0], tab_gyro[1][0], tab_gyro[2][0]});
@@ -122,7 +118,13 @@ void fc_task() {
     int PWM_BR = int_clamp(base_thrust + torque.y + torque.x, 0, 255);
     int PWM_BL = int_clamp(base_thrust - torque.y + torque.x, 0, 255);
     
-
+    debug_counter++;
+    if (debug_counter >= 100) {
+        debug_counter = 0;
+        //Afficher également les commandes Moteur1,2,3,4////////////////////////////////////////////////////
+        Serial.printf("%f,%f,%f,%f\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z);
+        
+    }
 }
 
 void setup() {

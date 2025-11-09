@@ -19,7 +19,7 @@ char payload[PAYLOAD_SIZE];
 void setupNRF() {
   if (!radio.begin()) {
     Serial.println("Erreur: NRF24 non détecté !");
-    while (1);
+    //while (1);
   }
   // Paramètres identiques à l'émetteur
   radio.setChannel(0);              // Même canal que l'Arduino
@@ -34,7 +34,7 @@ void setupNRF() {
 void readNRFData() {
   if (radio.available()) {
     radio.read(&payload, PAYLOAD_SIZE);  // Lecture du message
-    Serial.print("Message reçu: ");
-    Serial.println(payload);
+    //Serial.print("Message reçu: ");
+    //Serial.println(payload);
   }
 }

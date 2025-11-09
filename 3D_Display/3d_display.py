@@ -1,109 +1,74 @@
 from vpython import *
-import serial
 import math
 import numpy as np
-
-# --- Initialisation VPython ---
-scene = canvas(title="Orientation MPU (quaternion)")
+import serial
+# --- Initialisation VPython --- 
+scene = canvas(title="Orientation Drone", width=600, height=600, align='left')
 cube = box(size=vector(1,1,1), color=vector(0.2,0.5,0.8))
+x_axis = arrow(pos=cube.pos, axis=vector(1,0,0), color=color.red) 
+y_axis = arrow(pos=cube.pos, axis=vector(0,1,0), color=color.green) 
+z_axis = arrow(pos=cube.pos, axis=vector(0,0,1), color=color.blue) 
+# --- Texte --- 
+text_q = wtext(text="Quaternion: 0,0,0,0") 
+scene.append_to_caption("\n") 
+scene.forward = vector(0, -1, 0) 
+# Caméra regarde vers le bas (axe Y-) 
+scene.up = vector(0, 0, 1) 
+# Le haut de la caméra est l’axe Z 
+scene.center = vector(0, 0, 0) 
+# Centre de la scène 
 
-# --- Texte ---
-text_q = wtext(text="Quaternion: 0,0,0,0")
-scene.append_to_caption("\n")
+# --- Panneau latéral à droite ---
+panel = canvas(width=300, height=500, background=color.white, align='right')
+text_q = wtext(canvas=panel, text="Quaternion: 0,0,0,0\n")
+panel.append_to_caption("\n\t\t--- Puissance moteurs ---\n\n\n")
 
+def no_action(s): pass
+panel.append_to_caption("\t\tFL\t----------------\tFR\n")
+slider1 = slider(canvas=panel, min=0, max=100, value=0, length=200, bind=lambda s: no_action())
+slider2 = slider(canvas=panel, min=0, max=100, value=0, length=200, bind=lambda s: no_action())
+panel.append_to_caption("\n\n\n")
+panel.append_to_caption("\t\tBL\t----------------\tBR\n")
+slider3 = slider(canvas=panel, min=0, max=100, value=0, length=200, bind=lambda s: no_action())
+slider4 = slider(canvas=panel, min=0, max=100, value=0, length=200, bind=lambda s: no_action())
+
+
+txt_throttle = wtext(canvas=panel, text="\n\n\n\nM1=0% | M2=0% | M3=0% | M4=0%\n")
+
+# --- Fonction quaternion -> orientation ---
 def set_orientation_from_quaternion(cube, q0, q1, q2, q3):
-    # Normaliser (au cas où)
     norm = math.sqrt(q0*q0 + q1*q1 + q2*q2 + q3*q3)
     q0, q1, q2, q3 = q0/norm, q1/norm, q2/norm, q3/norm
 
-    # Matrice de rotation issue du quaternion
     R = np.array([
-        [1 - 2*(q2*q2 + q3*q3),     2*(q1*q2 - q0*q3),     2*(q1*q3 + q0*q2)],
-        [2*(q1*q2 + q0*q3),         1 - 2*(q1*q1 + q3*q3), 2*(q2*q3 - q0*q1)],
-        [2*(q1*q3 - q0*q2),         2*(q2*q3 + q0*q1),     1 - 2*(q1*q1 + q2*q2)]
+        [1 - 2*(q2*q2 + q3*q3), 2*(q1*q2 - q0*q3), 2*(q1*q3 + q0*q2)],
+        [2*(q1*q2 + q0*q3), 1 - 2*(q1*q1 + q3*q3), 2*(q2*q3 - q0*q1)],
+        [2*(q1*q3 - q0*q2), 2*(q2*q3 + q0*q1), 1 - 2*(q1*q1 + q2*q2)]
     ])
 
-    # Appliquer la rotation au cube
-    cube.axis = vector(R[0,0], R[1,0], R[2,0])
-    cube.up   = vector(R[0,2], R[1,2], R[2,2])
+    x_vec = vector(R[0,0], R[1,0], R[2,0])
+    y_vec = vector(R[0,1], R[1,1], R[2,1])
+    z_vec = vector(R[0,2], R[1,2], R[2,2])
 
-# --- Port série ---
-ser = serial.Serial('COM8', 115200)
+    cube.axis = x_vec
+    cube.up = z_vec
+    x_axis.axis = x_vec
+    y_axis.axis = y_vec
+    z_axis.axis = z_vec
 
-while True:
+# --- Boucle principale ---
+ser = serial.Serial('COM8', 115200) 
+while True: 
     rate(50)
-    try:
-        line = ser.readline().decode('utf-8').strip()
-        if not line:
-            continue
-
-        # Attendu : "q0,q1,q2,q3"
-        q0, q1, q2, q3 = map(float, line.split(','))
+    try: 
+        line = ser.readline().decode('utf-8').strip() 
+        if not line: continue
+    
+        q0, q1, q2, q3 = map(float, line.split(',')) #Ajouter les valeurs des moteurs
+        
         set_orientation_from_quaternion(cube, q0, q1, q2, q3)
-        text_q.text = f"Quaternion: {q0:.3f}, {q1:.3f}, {q2:.3f}, {q3:.3f}"
-
-    except Exception as e:
-        print("Erreur lecture port série:", e)
-
-
-"""
-from vpython import *
-import serial
-import math
-import numpy as np
-
-# --- Initialisation VPython ---
-scene = canvas(title="Orientation MPU")
-cube = box(size=vector(1,1,1), color=vector(0.2,0.5,0.8))
-
-# Texte pour afficher les angles
-roll_text = wtext(text="Roll: 0.0°")
-pitch_text = wtext(text=" | Pitch: 0.0°")
-yaw_text = wtext(text=" | Yaw: 0.0°")
-scene.append_to_caption("\n")  # Saut de ligne
-def set_orientation(cube, roll, pitch, yaw):
-    # Convertir degrés en radians
-    roll = math.radians(roll)
-    pitch = math.radians(pitch)
-    yaw = math.radians(yaw)
-
-    # Matrice de rotation ZYX
-    Rz = np.array([[math.cos(yaw), -math.sin(yaw), 0],
-                   [math.sin(yaw),  math.cos(yaw), 0],
-                   [0, 0, 1]])
-    Ry = np.array([[math.cos(pitch), 0, math.sin(pitch)],
-                   [0, 1, 0],
-                   [-math.sin(pitch), 0, math.cos(pitch)]])
-    Rx = np.array([[1, 0, 0],
-                   [0, math.cos(roll), -math.sin(roll)],
-                   [0, math.sin(roll),  math.cos(roll)]])
-
-    R = Rz @ Ry @ Rx
-    cube.axis = vector(R[0,0], R[1,0], R[2,0])
-    cube.up   = vector(R[0,2], R[1,2], R[2,2])
-
-# --- Initialisation du port série ---
-ser = serial.Serial('COM8', 115200, timeout=1)  # Remplace 'COM3' par ton port
-
-while True:
-    rate(50)  # Limiter à 50 FPS
-
-    try:
-        line = ser.readline().decode('utf-8').strip()
-
-        if not line:
-            continue
-        #print(line)
-        # Attendu : "roll,pitch,yaw"
-        roll_str, pitch_str, yaw_str = line.split(',')
-        roll = float(roll_str)
-        pitch = float(pitch_str)
-        yaw = float(yaw_str)
-        set_orientation(cube, roll, pitch, yaw)
-        # Mise à jour du texte à l'écran
-        roll_text.text = f"Roll: {roll:.2f}°"
-        pitch_text.text = f" | Pitch: {pitch:.2f}°"
-        yaw_text.text = f" | Yaw: {yaw:.2f}°"
-    except Exception as e:
-        print("Erreur lecture port série:", e)
-"""
+        text_q.text = f"Quaternion: {q0:.3f} | {q1:.3f} | {q2:.3f} | {q3:.3f}\n"
+        slider1.value, slider2.value, slider3.value, slider4.value = 20, 50, 80, 30 #Ajouter les valeurs des moteurs
+    except Exception as e: 
+        pass
+        #print("Erreur lecture port série:", e)

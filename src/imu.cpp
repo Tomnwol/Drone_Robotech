@@ -48,11 +48,13 @@ void calibrate_gyro() {
 }
 
 bool isMagnePresent() {
+    return true;
     Wire.beginTransmission(QMC5883L_ADDR); // ou adresse 0x0D selon ton driver
     return (Wire.endTransmission() == 0);
 }
 
 bool isMPUPresent() {
+    return true;
     Wire.beginTransmission(MPU9265_ADDR); // ou adresse 0x0D selon ton driver
     return (Wire.endTransmission() == 0);
 }
