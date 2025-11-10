@@ -25,15 +25,15 @@ panel.append_to_caption("\n\t\t--- Puissance moteurs ---\n\n\n")
 
 def no_action(s): pass
 panel.append_to_caption("\t\tFL\t----------------\tFR\n")
-slider1 = slider(canvas=panel, min=0, max=100, value=0, length=200, bind=lambda s: no_action())
-slider2 = slider(canvas=panel, min=0, max=100, value=0, length=200, bind=lambda s: no_action())
+slider1 = slider(canvas=panel, min=48, max=2047, value=0, length=200, bind=lambda s: no_action())
+slider2 = slider(canvas=panel, min=48, max=2047, value=0, length=200, bind=lambda s: no_action())
 panel.append_to_caption("\n\n\n")
 panel.append_to_caption("\t\tBL\t----------------\tBR\n")
-slider3 = slider(canvas=panel, min=0, max=100, value=0, length=200, bind=lambda s: no_action())
-slider4 = slider(canvas=panel, min=0, max=100, value=0, length=200, bind=lambda s: no_action())
+slider3 = slider(canvas=panel, min=48, max=2047, value=0, length=200, bind=lambda s: no_action())
+slider4 = slider(canvas=panel, min=48, max=2047, value=0, length=200, bind=lambda s: no_action())
 
 
-txt_throttle = wtext(canvas=panel, text="\n\n\n\nM1=0% | M2=0% | M3=0% | M4=0%\n")
+txt_throttle = wtext(canvas=panel, text="\n\n\n\nMFL=0% | MFR=0% | MBL=0% | MBR=0%\n")
 
 # --- Fonction quaternion -> orientation ---
 def set_orientation_from_quaternion(cube, q0, q1, q2, q3):
@@ -63,12 +63,13 @@ while True:
     try: 
         line = ser.readline().decode('utf-8').strip() 
         if not line: continue
-    
-        q0, q1, q2, q3 = map(float, line.split(',')) #Ajouter les valeurs des moteurs
-        
+        data_read = map(float, line.split(','))
+        print(line)
+        q0, q1, q2, q3, MOT_FL, MOT_FR, MOT_BL, MOT_BR = data_read #Ajouter les valeurs des moteurs
         set_orientation_from_quaternion(cube, q0, q1, q2, q3)
         text_q.text = f"Quaternion: {q0:.3f} | {q1:.3f} | {q2:.3f} | {q3:.3f}\n"
-        slider1.value, slider2.value, slider3.value, slider4.value = 20, 50, 80, 30 #Ajouter les valeurs des moteurs
+        slider1.value, slider2.value, slider3.value, slider4.value = MOT_FL, MOT_FR, MOT_BL, MOT_BR #Ajouter les valeurs des moteurs
+        txt_throttle.text = f"\n\n\n\nMFL={MOT_FL} | MFR={MOT_FR} | MBL={MOT_BL} | MBR={MOT_BR}\n"  
     except Exception as e: 
-        pass
-        #print("Erreur lecture port série:", e)
+        #pass
+        print("Erreur lecture port série:", e)

@@ -14,5 +14,5 @@ Quaternion quat_multiply(Quaternion q1, Quaternion q2);
 Vector3f quat_to_attitude_error(Quaternion q_err);
 Vector3f vec_scale(Vector3f v, float s);
 Vector3f vec_sub(Vector3f v1, Vector3f v2);
-int int_clamp(int value, int min, int max);
+uint16_t int_clamp(uint16_t value, uint16_t min, uint16_t max);
 #endif

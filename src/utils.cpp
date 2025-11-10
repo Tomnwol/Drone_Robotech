@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "types.hpp"
 #include "utils.hpp"
 
@@ -82,7 +83,7 @@ Vector3f vec_sub(Vector3f v1, Vector3f v2) {
     return r;
 }
 
-int int_clamp(int value, int min, int max){
+uint16_t int_clamp(uint16_t value, uint16_t min, uint16_t max){
     if (value < min){
         return min;
     }else if(value > max){
