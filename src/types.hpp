@@ -14,4 +14,10 @@ typedef struct {
     float z;
 } Quaternion;
 
+struct Euler {
+  float roll;
+  float pitch;
+  float yaw;
+};
+
 #endif

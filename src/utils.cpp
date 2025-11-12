@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "types.hpp"
 #include "utils.hpp"
 
@@ -83,6 +84,27 @@ Vector3f vec_sub(Vector3f v1, Vector3f v2) {
     return r;
 }
 
+Vector3f vec_add(Vector3f v1, Vector3f v2) {
+    Vector3f r = {v1.x+v2.x, v1.y+v2.y, v1.z+v2.z};
+    return r;
+}
+
+Vector3f vec_clamp(Vector3f value, Vector3f min, Vector3f max) {
+    Vector3f clamped_vector = {0};
+    clamped_vector.x = float_clamp(value.x, min.x, max.x);
+    clamped_vector.y = float_clamp(value.y, min.y, max.y);
+    clamped_vector.z = float_clamp(value.z, min.z, max.z);
+    return clamped_vector;
+}
+
+float float_clamp(float value, float min, float max){
+    if (value < min){
+        return min;
+    }else if(value > max){
+        return max;
+    }
+    return value;
+}
 uint16_t int_clamp(uint16_t value, uint16_t min, uint16_t max){
     if (value < min){
         return min;
@@ -90,4 +112,31 @@ uint16_t int_clamp(uint16_t value, uint16_t min, uint16_t max){
         return max;
     }
     return value;
+}
+float float_remap(float x, float in_min, float in_max, float out_min, float out_max) {
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+
+Euler quat_to_euler(Quaternion q) {
+    Euler e;
+
+    // Roll (x-axis rotation)
+    float sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
+    float cosr_cosp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
+    e.roll = atan2f(sinr_cosp, cosr_cosp);
+
+    // Pitch (y-axis rotation)
+    float sinp = 2.0f * (q.w * q.y - q.z * q.x);
+    if (fabsf(sinp) >= 1.0f)
+        e.pitch = copysignf(M_PI / 2.0f, sinp); // use 90° if out of range
+    else
+        e.pitch = asinf(sinp);
+
+    // Yaw (z-axis rotation)
+    float siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
+    float cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
+    e.yaw = atan2f(siny_cosp, cosy_cosp);
+
+    return e;
 }

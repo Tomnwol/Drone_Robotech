@@ -13,6 +13,11 @@ Quaternion quat_conjugate(Quaternion q);
 Quaternion quat_multiply(Quaternion q1, Quaternion q2);
 Vector3f quat_to_attitude_error(Quaternion q_err);
 Vector3f vec_scale(Vector3f v, float s);
+Vector3f vec_add(Vector3f v1, Vector3f v2);
 Vector3f vec_sub(Vector3f v1, Vector3f v2);
+Vector3f vec_clamp(Vector3f value, Vector3f min, Vector3f max);
+float float_clamp(float value, float min, float max);
 uint16_t int_clamp(uint16_t value, uint16_t min, uint16_t max);
+float float_remap(float x, float in_min, float in_max, float out_min, float out_max);
+Euler quat_to_euler(Quaternion q);
 #endif

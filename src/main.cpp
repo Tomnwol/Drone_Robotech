@@ -1,6 +1,7 @@
 //#include "Arduino.h"
 #include <stdio.h>
 #include <Arduino.h>
+#include "DShotRMT.h"
 #include "i2c_basics.hpp"
 #include "MadgwickAHRS.hpp"
 #include "esp_timer.h"
@@ -10,6 +11,9 @@
 #include "utils.hpp"
 #include "NRF_receiver.hpp"
 //static const char *TAG = "MPU9265";
+#define M1_PIN 13
+#define DSHOT_MODE DSHOT300
+DShotRMT motorM1(M1_PIN, RMT_CHANNEL_0);
 
 #define SIZE_TAB  2
 float tab_acce[3][SIZE_TAB] = {{0},{0},{0}}; //stocke les dernières valeurs d'accélération
@@ -45,67 +49,8 @@ void passes_bas(float dt){
     tab_magne[1][0] = passe_bas(tab_magne[1][0], tab_magne[1][1], dt, f_c_magne);
     tab_magne[2][0] = passe_bas(tab_magne[2][0], tab_magne[2][1], dt, f_c_magne);
 }
-Quaternion remove_yaw(Quaternion q) {
-    // Extraire les angles Euler
-    float sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
-    float cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
-    float roll = atan2(sinr_cosp, cosr_cosp);
 
-    float sinp = 2 * (q.w * q.y - q.z * q.x);
-    float pitch = fabs(sinp) >= 1 ? copysign(M_PI / 2, sinp) : asin(sinp);
-
-    // Ignorer le yaw (on le remet à 0)
-    float yaw = 0.0f;
-
-    // Recréer un quaternion sans yaw
-    float cy = cos(yaw * 0.5f);
-    float sy = sin(yaw * 0.5f);
-    float cp = cos(pitch * 0.5f);
-    float sp = sin(pitch * 0.5f);
-    float cr = cos(roll * 0.5f);
-    float sr = sin(roll * 0.5f);
-
-    Quaternion q_no_yaw;
-    q_no_yaw.w = cr * cp * cy + sr * sp * sy;
-    q_no_yaw.x = sr * cp * cy - cr * sp * sy;
-    q_no_yaw.y = cr * sp * cy + sr * cp * sy;
-    q_no_yaw.z = cr * cp * sy - sr * sp * cy;
-    return q_no_yaw;
-}
-
-struct Euler {
-  float roll;
-  float pitch;
-  float yaw;
-};
-
-Euler quat_to_euler(Quaternion q) {
-    Euler e;
-
-    // Roll (x-axis rotation)
-    float sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
-    float cosr_cosp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
-    e.roll = atan2f(sinr_cosp, cosr_cosp);
-
-    // Pitch (y-axis rotation)
-    float sinp = 2.0f * (q.w * q.y - q.z * q.x);
-    if (fabsf(sinp) >= 1.0f)
-        e.pitch = copysignf(M_PI / 2.0f, sinp); // use 90° if out of range
-    else
-        e.pitch = asinf(sinp);
-
-    // Yaw (z-axis rotation)
-    float siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
-    float cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
-    e.yaw = atan2f(siny_cosp, cosy_cosp);
-
-    return e;
-}
-
-
-void fc_task() {
-
-    
+void fc_task() { 
     static int debug_counter_inner = 0;
     static unsigned long lastTime_outter = 0;
     static unsigned long lastTime_inner = 0;
@@ -114,12 +59,14 @@ void fc_task() {
     debug_counter_inner++;
     if (debug_counter_inner >= 500) {
         debug_counter_inner = 0;
-        readNRFData();
+        readNRFData();// Ajouter une Sécu, si pas de commande pendant x ms OU valeurs incohérentes => Arret obligatoire
+        //motorM1.sendThrottleValue(300);
     }
 
-    if (I2C_init_error == true){
+    /*if (I2C_init_error == true){ //Cette sécurité ne marche pas, à vérifier
         return;
-    }
+    }*/
+    return;
     static int magne_compteur = 0;
     static Quaternion q_drone = {1, 0, 0, 0};
     static Vector3f omega_set = {0};
@@ -151,7 +98,8 @@ void fc_task() {
             sampleFreqLocal,
             tab_gyro[0][0], tab_gyro[1][0], tab_gyro[2][0],
             tab_acce[0][0], tab_acce[1][0], tab_acce[2][0],
-            tab_magne[0][0], tab_magne[1][0], tab_magne[2][0]
+            //tab_magne[0][0], tab_magne[1][0], tab_magne[2][0]
+            0, 0, 0
         );
 
         q_drone.w = q0; q_drone.x = q1; q_drone.y = q2; q_drone.z = q3;
@@ -189,17 +137,39 @@ void fc_task() {
     }
 
     Vector3f err_ang_rate = vec_sub(omega_set, (Vector3f){tab_gyro[0][0], tab_gyro[1][0], tab_gyro[2][0]});
-    float Kp_ang_rate = 50; //Mettre un Kp plus faible, voir les valeurs min et max de variation, puis remap pour le dshot
-    Vector3f torque = vec_scale(err_ang_rate, Kp_ang_rate);
+    
+    float Kp_ang_rate = 5; //Mettre un Kp plus faible, voir les valeurs min et max de variation, puis remap pour le dshot
+    float Ki_ang_rate = 0.5f;
+    Vector3f integration_min = {-0.5, -0.5, 0};  
+    Vector3f integration_max = {0.5, 0.5, 0};      // Limite pour l'intégrateur (à ajuster selon essais)
+    static Vector3f err_ang_rate_int = {0, 0, 0};
+    // Accumulation de l'intégrateur
+    err_ang_rate_int = vec_add( err_ang_rate_int , vec_scale(err_ang_rate, dt_inner) );
+    // Saturation de l’intégrateur (anti-windup)
+    err_ang_rate_int = vec_clamp(err_ang_rate_int, integration_min, integration_max);
 
-    float base_thrust = 1000;
+    Vector3f torque = vec_add(
+        vec_scale(err_ang_rate, Kp_ang_rate),
+        vec_scale(err_ang_rate_int, Ki_ang_rate)
+    );
+    //if (debug_counter ==0) {
+    //    Serial.printf("torque : %f,%f\n", torque.x, torque.y);
+    //}
+    float torque_amplitude = 50.0; // valeur d'amplitude empirique mesurée avec Kp = 5 et Ki = 0.5
+    torque = vec_scale(torque, 500.0f/torque_amplitude); // On veut un torque entre -500 et 500 
+    torque = vec_clamp(torque, (Vector3f){-500,-500,0}, (Vector3f){500,500,0});
+    float base_thrust = 1000; //Récupérer la valeur de la télécommande
+    float base_thrust_min = 100;
+    float base_thrust_max = 1900;
+    base_thrust = float_clamp(base_thrust, base_thrust_min, base_thrust_max);
     // Remarque: sur ce montage, l'IMU est orientée de 90°
     // => gyro.x = roulis (roll), gyro.y = tangage (pitch)
-    // Mixage adapté 
+    //On peut viser : torque.x, torque.y ∈ [-500, +500] & base_thrust ∈ [100 à 1900]
     uint16_t MOT_FL = int_clamp(base_thrust - torque.y + torque.x, 48, 2047);
     uint16_t MOT_FR = int_clamp(base_thrust - torque.y - torque.x, 48, 2047);
     uint16_t MOT_BR = int_clamp(base_thrust + torque.y - torque.x, 48, 2047);
     uint16_t MOT_BL = int_clamp(base_thrust + torque.y + torque.x, 48, 2047);
+
     debug_counter++;
     if (debug_counter >= 100) {
         debug_counter = 0;
@@ -218,6 +188,7 @@ void setup() {
     bool is_MPU_present = isMPUPresent();
     I2C_init_error = !is_magne_present || !is_MPU_present;
     setupNRF();
+    motorM1.begin(DSHOT_MODE);
     Serial.println("DebugTestprint");
     
 }
