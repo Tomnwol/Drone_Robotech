@@ -1,7 +1,7 @@
 //#include "Arduino.h"
 #include <stdio.h>
 #include <Arduino.h>
-#include "DShotRMT.h"
+#include <DShotRMT.h>
 #include "i2c_basics.hpp"
 #include "MadgwickAHRS.hpp"
 #include "esp_timer.h"
@@ -10,10 +10,10 @@
 #include "types.hpp"
 #include "utils.hpp"
 #include "NRF_receiver.hpp"
-//static const char *TAG = "MPU9265";
-#define M1_PIN 13
-#define DSHOT_MODE DSHOT300
-DShotRMT motorM1(M1_PIN, RMT_CHANNEL_0);
+
+static constexpr gpio_num_t MOTOR_PIN = GPIO_NUM_13;
+static constexpr dshot_mode_t MODE = DSHOT600;
+DShotRMT motor(MOTOR_PIN, MODE, false);
 
 #define SIZE_TAB  2
 float tab_acce[3][SIZE_TAB] = {{0},{0},{0}}; //stocke les dernières valeurs d'accélération
@@ -59,14 +59,12 @@ void fc_task() {
     debug_counter_inner++;
     if (debug_counter_inner >= 500) {
         debug_counter_inner = 0;
-        readNRFData();// Ajouter une Sécu, si pas de commande pendant x ms OU valeurs incohérentes => Arret obligatoire
-        //motorM1.sendThrottleValue(300);
+       readNRFData();// Ajouter une Sécu, si pas de commande pendant x ms OU valeurs incohérentes => Arret obligatoire
     }
 
     /*if (I2C_init_error == true){ //Cette sécurité ne marche pas, à vérifier
         return;
     }*/
-    return;
     static int magne_compteur = 0;
     static Quaternion q_drone = {1, 0, 0, 0};
     static Vector3f omega_set = {0};
@@ -81,10 +79,10 @@ void fc_task() {
     Vector3f gyro_vect  = read_gyro();
 
     magne_compteur++;
-    if (magne_compteur >= 10) {
+    /*if (magne_compteur >= 10) {
         magne_compteur = 0;
         magne_vect = read_magne();
-    }
+    }*/
 
     fill_queues(accel_vect, gyro_vect, magne_vect);
     passes_bas(dt_inner);
@@ -103,15 +101,7 @@ void fc_task() {
         );
 
         q_drone.w = q0; q_drone.x = q1; q_drone.y = q2; q_drone.z = q3;
-        
-        /*
-        Quaternion q_desired = {1, 0, 0, 0};
-        Quaternion q_e = quat_multiply(q_desired, quat_conjugate(q_drone));
-        Vector3f att_e = quat_to_attitude_error(q_e);
-        
-        float Kp_att = 4.0f;
-        omega_set = vec_scale(att_e, Kp_att);
-        */
+      
         // Obtiens les angles
         Euler att = quat_to_euler(q_drone);
 
@@ -174,7 +164,7 @@ void fc_task() {
     if (debug_counter >= 100) {
         debug_counter = 0;
         //Afficher également les commandes Moteur1,2,3,4////////////////////////////////////////////////////
-        Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
+        //Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
         
     }
 }
@@ -184,13 +174,27 @@ void setup() {
     i2c_master_init(I2C_MASTER_0_PORT, I2C_MASTER_0_SDA_IO, I2C_MASTER_0_SCL_IO, I2C_MASTER_0_FREQ_HZ);
     i2c_master_init(I2C_MASTER_1_PORT, I2C_MASTER_1_SDA_IO, I2C_MASTER_1_SCL_IO, I2C_MASTER_1_FREQ_HZ);
     qmc5883l_init();
-    bool is_magne_present = isMagnePresent();
-    bool is_MPU_present = isMPUPresent();
-    I2C_init_error = !is_magne_present || !is_MPU_present;
-    setupNRF();
-    motorM1.begin(DSHOT_MODE);
-    Serial.println("DebugTestprint");
+    //bool is_magne_present = isMagnePresent();
+    //bool is_MPU_present = isMPUPresent();
+    //I2C_init_error = !is_magne_present || !is_MPU_present;
     
+    motor.begin();
+    /*unsigned long start = millis();
+    while (millis() - start < 1000) {
+      motor.sendThrottle(0);
+      delay(2);
+    }
+    delay(200);
+    for (uint16_t t = 48; t <= 200; ++t) {
+      motor.sendThrottle(t);
+      delay(50); // ramp lente
+    }
+    // Retour à zéro
+    for (uint16_t t = 200; t >= 48; --t) {
+      motor.sendThrottle(t);
+      delay(25);
+    }*/
+    setupNRF();
 }
 
 

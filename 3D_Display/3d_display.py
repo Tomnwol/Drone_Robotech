@@ -57,7 +57,7 @@ def set_orientation_from_quaternion(cube, q0, q1, q2, q3):
     z_axis.axis = z_vec
 
 # --- Boucle principale ---
-ser = serial.Serial('COM8', 115200) 
+ser = serial.Serial('COM7', 115200)
 while True: 
     rate(50)
     try: 
