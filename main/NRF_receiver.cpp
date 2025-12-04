@@ -38,15 +38,15 @@ void setupNRF() {
 void readNRFData() {
   if (radio.available()) {
     radio.read(&payload, PAYLOAD_SIZE);  // Lecture du message
-    Serial.print("Message reçu: ");
-    Serial.println(payload);
+    //Serial.print("Message reçu: ");
+    //Serial.println(payload);
 
     uint16_t throttle = payload[0] + payload[1] << 8;
     uint16_t rotation = payload[2] + payload[3] << 8;
-    Serial.print("Throttle : ");
-    Serial.println(throttle);
+    //Serial.print("Throttle : ");
+    //Serial.println(throttle);
 
-    Serial.print("Rotation : ");
-    Serial.println(rotation);
+    //Serial.print("Rotation : ");
+    //Serial.println(rotation);
   }
 }

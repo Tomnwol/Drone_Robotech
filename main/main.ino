@@ -164,7 +164,7 @@ void fc_task() {
     if (debug_counter >= 100) {
         debug_counter = 0;
         //Afficher également les commandes Moteur1,2,3,4////////////////////////////////////////////////////
-        //Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
+        Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
         
     }
 }
@@ -179,7 +179,7 @@ void setup() {
     //I2C_init_error = !is_magne_present || !is_MPU_present;
     
     motor.begin();
-    /*unsigned long start = millis();
+    unsigned long start = millis();
     while (millis() - start < 1000) {
       motor.sendThrottle(0);
       delay(2);
@@ -193,11 +193,11 @@ void setup() {
     for (uint16_t t = 200; t >= 48; --t) {
       motor.sendThrottle(t);
       delay(25);
-    }*/
-    setupNRF();
+    }
+    //setupNRF();
 }
 
 
 void loop() {
-    fc_task(); // Remplace la version FreeRTOS par une fonction Arduino
+    //fc_task(); // Remplace la version FreeRTOS par une fonction Arduino
 }
