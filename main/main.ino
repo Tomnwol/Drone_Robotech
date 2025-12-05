@@ -24,8 +24,8 @@ DShotRMT motorBR(MOTOR_BR_PIN, MODE, false);
 
 #define BASE_THRUST_MIN 100
 #define BASE_THRUST_MAX 1900
-#define BASE_THRUST_MAX_FAILSAFE 700
-#define BASE_THRUST_FAILSAFE_AUTO 600
+#define BASE_THRUST_MAX_FAILSAFE 900
+#define BASE_THRUST_FAILSAFE_AUTO 800
 int failsafe_mode = 0; /* 0->OK  1->Activation FS par radio  2->Communication perdue */
 bool killswitch_enable = false; /* Si le mode KS est activé, il ne pourra plus être désactivé avant redémarrage */ 
 
@@ -66,15 +66,15 @@ void passes_bas(float dt){
 
 float get_base_thrust_max(){
     if (failsafe_mode){
-      return BASE_THRUST_MAX;
-    }else{
       return BASE_THRUST_MAX_FAILSAFE;
+    }else{
+      return BASE_THRUST_MAX;
     }
 }
 
 bool is_kill_mode_enable(){ /* Non réversible mode -> désactivation des moteurs */
   if (killswitch_enable == false){
-    if (radio_delta_time > 1500){
+    if (radio_delta_time > 5000){ //1500 ! Pour les TESTS ON MET + MAIS ATTENTION A BIEN REMETTRE 1500 PLUS TARD
       killswitch_enable = true;
       return true;
     }
@@ -171,12 +171,12 @@ void fc_task() {
       base_thrust = float_remap(BASE_THRUST_FAILSAFE_AUTO, 0, 1023, BASE_THRUST_MIN, base_thrust_max);
     }
 
-    base_thrust = float_clamp(base_thrust, BASE_THRUST_MIN, BASE_THRUST_MAX);
+    base_thrust = float_clamp(base_thrust, BASE_THRUST_MIN, base_thrust_max);
 
     // Remarque: sur ce montage, l'IMU est orientée de 90°
     // => gyro.x = roulis (roll), gyro.y = tangage (pitch)
     //On peut viser : torque.x, torque.y ∈ [-500, +500] & base_thrust ∈ [100 à 1900]
-    if(!is_kill_mode_enable()){
+    if(!is_kill_mode_enable()){ // ATTENTION A BIEN REGLER LA VALEUR DE DELTA RADIO LORS DUN VRAI VOL
       
       uint16_t MOT_FL = int_clamp(base_thrust - torque.y + torque.x, 48, 2047);
       uint16_t MOT_FR = int_clamp(base_thrust - torque.y - torque.x, 48, 2047);
@@ -239,5 +239,5 @@ void setup() {
 
 
 void loop() {
-    //fc_task(); // Remplace la version FreeRTOS par une fonction Arduino
+    //fc_task();
 }
