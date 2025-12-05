@@ -17,6 +17,9 @@ const byte pipeAddress[5] = {'P','I','P','E','1'};
 #define PAYLOAD_SIZE 32
 char payload[PAYLOAD_SIZE];
 
+unsigned long radio_delta_time = 0; /*Sert à activer le Failsafe mode en cas de non-communication prolongée*/
+unsigned long radio_last_time = 0;
+
 uint16_t joyThrottle = 0; //analogRead(A0);
 uint16_t joyYaw = 0;
 uint16_t joyRoll = 0;
@@ -38,11 +41,15 @@ void setupNRF() {
   radio.startListening();           // On passe en mode réception
 
   Serial.println("NRF24 prêt à recevoir !");
+  radio_last_time = millis();
 }
 
+
 void readNRFData() {
+  radio_delta_time = millis() - radio_last_time;
   if (radio.available()) {
     radio.read(&payload, PAYLOAD_SIZE);  // Lecture du message
+    radio_last_time = millis();
     //Serial.print("Message reçu: ");
     joyThrottle = payload[0] + (payload[1]<<8);
     joyYaw = payload[2] + (payload[3]<<8);

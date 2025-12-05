@@ -1,7 +1,9 @@
+
 #include <stdio.h>
 #include <math.h>
 #include "types.hpp"
 #include "utils.hpp"
+
 
 float passe_bas(float value, float last_filtered_value, float dt, float f_c){
     float RC = 1.0f / (2.0f * 3.141592653f * f_c);

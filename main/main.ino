@@ -10,6 +10,7 @@
 #include "types.hpp"
 #include "utils.hpp"
 #include "NRF_receiver.hpp"
+#include "pid.hpp"
 
 static constexpr gpio_num_t MOTOR_FL_PIN = GPIO_NUM_13; //MOT1
 static constexpr gpio_num_t MOTOR_FR_PIN = GPIO_NUM_26;//GPIO_NUM_32; //MOT3
@@ -20,6 +21,13 @@ DShotRMT motorFL(MOTOR_FL_PIN, MODE, false);
 DShotRMT motorFR(MOTOR_FR_PIN, MODE, false);
 DShotRMT motorBL(MOTOR_BL_PIN, MODE, false);
 DShotRMT motorBR(MOTOR_BR_PIN, MODE, false);
+
+#define BASE_THRUST_MIN 100
+#define BASE_THRUST_MAX 1900
+#define BASE_THRUST_MAX_FAILSAFE 700
+#define BASE_THRUST_FAILSAFE_AUTO 600
+int failsafe_mode = 0; /* 0->OK  1->Activation FS par radio  2->Communication perdue */
+bool killswitch_enable = false; /* Si le mode KS est activé, il ne pourra plus être désactivé avant redémarrage */ 
 
 #define SIZE_TAB  2
 float tab_acce[3][SIZE_TAB] = {{0},{0},{0}}; //stocke les dernières valeurs d'accélération
@@ -56,6 +64,39 @@ void passes_bas(float dt){
     tab_magne[2][0] = passe_bas(tab_magne[2][0], tab_magne[2][1], dt, f_c_magne);
 }
 
+float get_base_thrust_max(){
+    if (failsafe_mode){
+      return BASE_THRUST_MAX;
+    }else{
+      return BASE_THRUST_MAX_FAILSAFE;
+    }
+}
+
+bool is_kill_mode_enable(){ /* Non réversible mode -> désactivation des moteurs */
+  if (killswitch_enable == false){
+    if (radio_delta_time > 1500){
+      killswitch_enable = true;
+      return true;
+    }
+    if (SWKillSwitch){ // Si la radio a reçu un signal KillSwitch
+      killswitch_enable = true;
+      return true;
+    }else{
+      return false;
+    }
+  }else{
+    return true;
+  }
+}
+
+void failsafe_mode_activation(){  /* 0->OK  1->Activation par radio  2->Communication perdue */
+  if (radio_delta_time > 500){ // La radio ne répond plus depuis 0.5s => failsafe mode => limiation moteur
+    failsafe_mode = 2;
+    return;
+  }
+  failsafe_mode = SWFailSafe;
+}
+
 void fc_task() { 
     static int debug_counter_inner = 0;
     static unsigned long lastTime_outter = 0;
@@ -65,7 +106,7 @@ void fc_task() {
     debug_counter_inner++;
     if (debug_counter_inner >= 500) {
         debug_counter_inner = 0;
-       readNRFData();// Ajouter une Sécu, si pas de commande pendant x ms OU valeurs incohérentes => Arret obligatoire
+       // Ajouter une Sécu, si pas de commande pendant x ms OU valeurs incohérentes => Arret obligatoire
     }
 
     /*if (I2C_init_error == true){ //Cette sécurité ne marche pas, à vérifier
@@ -97,6 +138,7 @@ void fc_task() {
     if (dt_outer > 0.004f) { // ~250 Hz
         lastTime_outter = now;
         float sampleFreqLocal = 1.0f / dt_outer;
+        //readNRFData();
 
         MadgwickAHRSupdate(
             sampleFreqLocal,
@@ -108,70 +150,48 @@ void fc_task() {
 
         q_drone.w = q0; q_drone.x = q1; q_drone.y = q2; q_drone.z = q3;
       
-        // Obtiens les angles
-        Euler att = quat_to_euler(q_drone);
+        Euler att = quat_to_euler(q_drone); // Obtiens l'attitude en Euler
+        const float MAX_ANGLE_RAD = 45.0f * M_PI / 180.0f;
+        if (fabs(att.roll) > MAX_ANGLE_RAD || fabs(att.pitch) > MAX_ANGLE_RAD){
+          killswitch_enable = true;
+        }
+        Euler att_desired = {0.0f, 0.0f, 0.0f}; // attitude cible (par ex. à plat)
 
-        // Définis ton attitude cible (par ex. à plat)
-        Euler att_desired = {0.0f, 0.0f, 0.0f};
-
-        // Calcul d’erreur
-        float err_roll  = att_desired.roll  - att.roll;
-        float err_pitch = att_desired.pitch - att.pitch;
-
-        // (Optionnel) ignorer le yaw car pas mesuré correctement
-        float err_yaw = 0.0f;
-
-        // PID ou proportionnel simple
-        float Kp_att = 4.0f;
-        float omega_roll  = Kp_att * err_roll;
-        float omega_pitch = Kp_att * err_pitch;
-
-        // Tu veux ensuite obtenir ton couple cible (en vitesse angulaire)
-        omega_set = {omega_roll, omega_pitch, 0.0f};
-
-        
+        omega_set = get_angular_rate_command(att, att_desired);
     }
 
-    Vector3f err_ang_rate = vec_sub(omega_set, (Vector3f){tab_gyro[0][0], tab_gyro[1][0], tab_gyro[2][0]});
-    
-    float Kp_ang_rate = 5; //Mettre un Kp plus faible, voir les valeurs min et max de variation, puis remap pour le dshot
-    float Ki_ang_rate = 0.5f;
-    Vector3f integration_min = {-0.5, -0.5, 0};  
-    Vector3f integration_max = {0.5, 0.5, 0};      // Limite pour l'intégrateur (à ajuster selon essais)
-    static Vector3f err_ang_rate_int = {0, 0, 0};
-    // Accumulation de l'intégrateur
-    err_ang_rate_int = vec_add( err_ang_rate_int , vec_scale(err_ang_rate, dt_inner) );
-    // Saturation de l’intégrateur (anti-windup)
-    err_ang_rate_int = vec_clamp(err_ang_rate_int, integration_min, integration_max);
+    Vector3f torque = get_torque(omega_set, (Vector3f){tab_gyro[0][0], tab_gyro[1][0], tab_gyro[2][0]}, dt_inner);
 
-    Vector3f torque = vec_add(
-        vec_scale(err_ang_rate, Kp_ang_rate),
-        vec_scale(err_ang_rate_int, Ki_ang_rate)
-    );
-    //if (debug_counter ==0) {
-    //    Serial.printf("torque : %f,%f\n", torque.x, torque.y);
-    //}
-    float torque_amplitude = 50.0; // valeur d'amplitude empirique mesurée avec Kp = 5 et Ki = 0.5
-    torque = vec_scale(torque, 500.0f/torque_amplitude); // On veut un torque entre -500 et 500 
-    torque = vec_clamp(torque, (Vector3f){-500,-500,0}, (Vector3f){500,500,0});
-    float base_thrust = 1000; //Récupérer la valeur de la télécommande
-    float base_thrust_min = 100;
-    float base_thrust_max = 1900;
-    base_thrust = float_clamp(base_thrust, base_thrust_min, base_thrust_max);
+    failsafe_mode_activation();
+    float base_thrust_max = get_base_thrust_max();
+    float base_thrust;
+    if (failsafe_mode != 2){
+      base_thrust = float_remap((float)joyThrottle, 0, 1023, BASE_THRUST_MIN, base_thrust_max); //Récupérer la valeur de la télécommande
+    }else{ // FS 2 -> Communication perdue
+      base_thrust = float_remap(BASE_THRUST_FAILSAFE_AUTO, 0, 1023, BASE_THRUST_MIN, base_thrust_max);
+    }
+
+    base_thrust = float_clamp(base_thrust, BASE_THRUST_MIN, BASE_THRUST_MAX);
+
     // Remarque: sur ce montage, l'IMU est orientée de 90°
     // => gyro.x = roulis (roll), gyro.y = tangage (pitch)
     //On peut viser : torque.x, torque.y ∈ [-500, +500] & base_thrust ∈ [100 à 1900]
-    uint16_t MOT_FL = int_clamp(base_thrust - torque.y + torque.x, 48, 2047);
-    uint16_t MOT_FR = int_clamp(base_thrust - torque.y - torque.x, 48, 2047);
-    uint16_t MOT_BR = int_clamp(base_thrust + torque.y - torque.x, 48, 2047);
-    uint16_t MOT_BL = int_clamp(base_thrust + torque.y + torque.x, 48, 2047);
-
-    debug_counter++;
-    if (debug_counter >= 100) {
-        debug_counter = 0;
-        //Afficher également les commandes Moteur1,2,3,4////////////////////////////////////////////////////
-        Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
-        
+    if(!is_kill_mode_enable()){
+      
+      uint16_t MOT_FL = int_clamp(base_thrust - torque.y + torque.x, 48, 2047);
+      uint16_t MOT_FR = int_clamp(base_thrust - torque.y - torque.x, 48, 2047);
+      uint16_t MOT_BR = int_clamp(base_thrust + torque.y - torque.x, 48, 2047);
+      uint16_t MOT_BL = int_clamp(base_thrust + torque.y + torque.x, 48, 2047);
+      motorFL.sendThrottle(MOT_FL);
+      motorFR.sendThrottle(MOT_FR);
+      motorBL.sendThrottle(MOT_BR);
+      motorBR.sendThrottle(MOT_BL);
+      debug_counter++;
+      if (debug_counter >= 100) {
+          debug_counter = 0;
+          //Afficher également les commandes Moteur1,2,3,4////////////////////////////////////////////////////
+          Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
+      }
     }
 }
 

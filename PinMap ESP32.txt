@@ -1,12 +1,12 @@
 Association des GPIO de notre ESP-32 DevKit (30 pins)
 GPIO 13 -> Moteur 1
 GPIO 12 -> ReadyToFlyLED
-GPIO 14 -> Moteur 2 -> 27
-GPIO 27 -> UTILISABLE test mot
-GPIO 26 -> SDA1 -> TEST MOT 3                   
+GPIO 14 -> SDA1
+GPIO 27 -> Moteur 2
+GPIO 26 -> Moteur 3               
 GPIO 25 -> SCL1
 GPIO 33 -> Moteur 4
-GPIO 32 -> Moteur 3
+GPIO 32 
 GPIO 35
 GPIO 34 -> GPLED
 GPIO 39

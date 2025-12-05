@@ -8,7 +8,10 @@ extern uint16_t joyPitch;
 extern uint16_t GP_Pot;
 extern uint8_t SWFailSafe;
 extern uint8_t SWKillSwitch;
+extern uint8_t SWKillSwitch;
 
+extern unsigned long radio_last_time;
+extern unsigned long radio_delta_time;
 void setupNRF();
 void readNRFData();
 
