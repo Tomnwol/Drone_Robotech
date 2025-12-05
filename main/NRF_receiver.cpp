@@ -1,6 +1,6 @@
 #include <SPI.h>
 #include <RF24.h>
-
+#include "NRF_receiver.hpp"
 // Définition des pins SPI pour ESP32
 #define CE_PIN   4
 #define CSN_PIN  5
@@ -11,18 +11,23 @@
 //MOSI -> 23
 // Création de l'objet RF24
 RF24 radio(CE_PIN, CSN_PIN);
-
 // Adresse du pipe d'émission de l'Arduino
 const byte pipeAddress[5] = {'P','I','P','E','1'};
 
-// Taille du payload
 #define PAYLOAD_SIZE 32
-
 char payload[PAYLOAD_SIZE];
+
+uint16_t joyThrottle = 0; //analogRead(A0);
+uint16_t joyYaw = 0;
+uint16_t joyRoll = 0;
+uint16_t joyPitch = 0;
+uint16_t GP_Pot = 0;
+uint8_t SWFailSafe = 0;
+uint8_t SWKillSwitch = 0;
 
 void setupNRF() {
   if (!radio.begin()) {
-    Serial.println("Erreur: NRF24 non détecté !");
+    Serial.println("Erreur: NRF24 non détecté !"); // else : allumer une led idéalement
     //while (1);
   }
   // Paramètres identiques à l'émetteur
@@ -39,14 +44,15 @@ void readNRFData() {
   if (radio.available()) {
     radio.read(&payload, PAYLOAD_SIZE);  // Lecture du message
     //Serial.print("Message reçu: ");
-    //Serial.println(payload);
+    joyThrottle = payload[0] + (payload[1]<<8);
+    joyYaw = payload[2] + (payload[3]<<8);
+    joyRoll = payload[4] + (payload[5]<<8);
+    joyPitch = payload[6] + (payload[7]<<8);
+    GP_Pot = payload[8] + (payload[9]<<8);
+    SWFailSafe = payload[10];
+    SWKillSwitch = payload[11];
 
-    uint16_t throttle = payload[0] + payload[1] << 8;
-    uint16_t rotation = payload[2] + payload[3] << 8;
     //Serial.print("Throttle : ");
-    //Serial.println(throttle);
-
-    //Serial.print("Rotation : ");
-    //Serial.println(rotation);
+    //Serial.println(joyThrottle);
   }
 }
