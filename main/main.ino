@@ -11,9 +11,15 @@
 #include "utils.hpp"
 #include "NRF_receiver.hpp"
 
-static constexpr gpio_num_t MOTOR_PIN = GPIO_NUM_13;
+static constexpr gpio_num_t MOTOR_FL_PIN = GPIO_NUM_13; //MOT1
+static constexpr gpio_num_t MOTOR_FR_PIN = GPIO_NUM_26;//GPIO_NUM_32; //MOT3
+static constexpr gpio_num_t MOTOR_BL_PIN = GPIO_NUM_27;//GPIO_NUM_14; //MOT2
+static constexpr gpio_num_t MOTOR_BR_PIN = GPIO_NUM_33; //MOT4
 static constexpr dshot_mode_t MODE = DSHOT600;
-DShotRMT motor(MOTOR_PIN, MODE, false);
+DShotRMT motorFL(MOTOR_FL_PIN, MODE, false);
+DShotRMT motorFR(MOTOR_FR_PIN, MODE, false);
+DShotRMT motorBL(MOTOR_BL_PIN, MODE, false);
+DShotRMT motorBR(MOTOR_BR_PIN, MODE, false);
 
 #define SIZE_TAB  2
 float tab_acce[3][SIZE_TAB] = {{0},{0},{0}}; //stocke les dernières valeurs d'accélération
@@ -172,27 +178,41 @@ void fc_task() {
 void setup() {
     Serial.begin(115200);
     i2c_master_init(I2C_MASTER_0_PORT, I2C_MASTER_0_SDA_IO, I2C_MASTER_0_SCL_IO, I2C_MASTER_0_FREQ_HZ);
-    i2c_master_init(I2C_MASTER_1_PORT, I2C_MASTER_1_SDA_IO, I2C_MASTER_1_SCL_IO, I2C_MASTER_1_FREQ_HZ);
-    qmc5883l_init();
+    //i2c_master_init(I2C_MASTER_1_PORT, I2C_MASTER_1_SDA_IO, I2C_MASTER_1_SCL_IO, I2C_MASTER_1_FREQ_HZ);
+    //qmc5883l_init();
+    setupNRF();
     //bool is_magne_present = isMagnePresent();
     //bool is_MPU_present = isMPUPresent();
     //I2C_init_error = !is_magne_present || !is_MPU_present;
-    
-    motor.begin();
+    delay(500); //JTAG Delay test
+    motorFL.begin();
+    motorFR.begin();
+    motorBL.begin();
+    motorBR.begin();
+    delay(2);
     unsigned long start = millis();
     while (millis() - start < 1000) {
-      motor.sendThrottle(0);
+      motorFL.sendThrottle(0);
+      motorFR.sendThrottle(0);
+      motorBL.sendThrottle(0);
+      motorBR.sendThrottle(0);
       delay(2);
     }
-    delay(200);
+    delay(500);
     for (uint16_t t = 48; t <= 200; ++t) {
-      motor.sendThrottle(t);
-      delay(50); // ramp lente
+      motorFL.sendThrottle(t);
+      motorFR.sendThrottle(t);
+      motorBL.sendThrottle(t);
+      motorBR.sendThrottle(t);
+      delay(5); // ramp lente
     }
     // Retour à zéro
     for (uint16_t t = 200; t >= 48; --t) {
-      motor.sendThrottle(t);
-      delay(25);
+      motorFL.sendThrottle(t);
+      motorFR.sendThrottle(t);
+      motorBL.sendThrottle(t);
+      motorBR.sendThrottle(t);
+      delay(5);
     }
     //setupNRF();
 }
