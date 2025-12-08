@@ -27,3 +27,6 @@ GPIO 23 -> MOSI_NRF
 
 Pinout moteur fonctionnel
 13, 26, 27, 33
+
+
+Défectueux : 14, 32

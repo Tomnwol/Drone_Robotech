@@ -22,10 +22,14 @@ DShotRMT motorFR(MOTOR_FR_PIN, MODE, false);
 DShotRMT motorBL(MOTOR_BL_PIN, MODE, false);
 DShotRMT motorBR(MOTOR_BR_PIN, MODE, false);
 
+#define TIME_BEFORE_MOTOR_ACTIVATION 10000000
 #define BASE_THRUST_MIN 100
 #define BASE_THRUST_MAX 1900
-#define BASE_THRUST_MAX_FAILSAFE 900
-#define BASE_THRUST_FAILSAFE_AUTO 800
+#define BASE_THRUST_MAX_FAILSAFE 800
+#define BASE_THRUST_FAILSAFE_AUTO 700
+
+#define MOTOR_MAX_VALUE 2047
+#define MOTOR_FAILSAFE_MAX_VALUE 1000
 int failsafe_mode = 0; /* 0->OK  1->Activation FS par radio  2->Communication perdue */
 bool killswitch_enable = false; /* Si le mode KS est activé, il ne pourra plus être désactivé avant redémarrage */ 
 
@@ -72,12 +76,20 @@ float get_base_thrust_max(){
     }
 }
 
+int get_motor_max_value(){
+    if (failsafe_mode){
+      return MOTOR_FAILSAFE_MAX_VALUE;
+    }else{
+      return MOTOR_MAX_VALUE;
+    }
+}
+
 bool is_kill_mode_enable(){ /* Non réversible mode -> désactivation des moteurs */
   if (killswitch_enable == false){
-    if (radio_delta_time > 5000){ //1500 ! Pour les TESTS ON MET + MAIS ATTENTION A BIEN REMETTRE 1500 PLUS TARD
+    /*if (radio_delta_time > 5000){ //1500 ! Pour les TESTS ON MET + MAIS ATTENTION A BIEN REMETTRE 1500 PLUS TARD
       killswitch_enable = true;
       return true;
-    }
+    }*/
     if (SWKillSwitch){ // Si la radio a reçu un signal KillSwitch
       killswitch_enable = true;
       return true;
@@ -103,15 +115,10 @@ void fc_task() {
     static unsigned long lastTime_inner = 0;
     static int debug_counter = 0;
     
-    debug_counter_inner++;
-    if (debug_counter_inner >= 500) {
-        debug_counter_inner = 0;
-       // Ajouter une Sécu, si pas de commande pendant x ms OU valeurs incohérentes => Arret obligatoire
-    }
+    
 
-    /*if (I2C_init_error == true){ //Cette sécurité ne marche pas, à vérifier
-        return;
-    }*/
+    debug_counter_inner++;
+
     static int magne_compteur = 0;
     static Quaternion q_drone = {1, 0, 0, 0};
     static Vector3f omega_set = {0};
@@ -138,7 +145,7 @@ void fc_task() {
     if (dt_outer > 0.004f) { // ~250 Hz
         lastTime_outter = now;
         float sampleFreqLocal = 1.0f / dt_outer;
-        //readNRFData();
+        readNRFData();
 
         MadgwickAHRSupdate(
             sampleFreqLocal,
@@ -152,7 +159,7 @@ void fc_task() {
       
         Euler att = quat_to_euler(q_drone); // Obtiens l'attitude en Euler
         const float MAX_ANGLE_RAD = 45.0f * M_PI / 180.0f;
-        if (fabs(att.roll) > MAX_ANGLE_RAD || fabs(att.pitch) > MAX_ANGLE_RAD){
+        if (now > TIME_BEFORE_MOTOR_ACTIVATION * 0.8 && (fabs(att.roll) > MAX_ANGLE_RAD || fabs(att.pitch) > MAX_ANGLE_RAD)){
           killswitch_enable = true;
         }
         Euler att_desired = {0.0f, 0.0f, 0.0f}; // attitude cible (par ex. à plat)
@@ -168,7 +175,7 @@ void fc_task() {
     if (failsafe_mode != 2){
       base_thrust = float_remap((float)joyThrottle, 0, 1023, BASE_THRUST_MIN, base_thrust_max); //Récupérer la valeur de la télécommande
     }else{ // FS 2 -> Communication perdue
-      base_thrust = float_remap(BASE_THRUST_FAILSAFE_AUTO, 0, 1023, BASE_THRUST_MIN, base_thrust_max);
+      base_thrust = BASE_THRUST_FAILSAFE_AUTO;
     }
 
     base_thrust = float_clamp(base_thrust, BASE_THRUST_MIN, base_thrust_max);
@@ -176,12 +183,13 @@ void fc_task() {
     // Remarque: sur ce montage, l'IMU est orientée de 90°
     // => gyro.x = roulis (roll), gyro.y = tangage (pitch)
     //On peut viser : torque.x, torque.y ∈ [-500, +500] & base_thrust ∈ [100 à 1900]
-    if(!is_kill_mode_enable()){ // ATTENTION A BIEN REGLER LA VALEUR DE DELTA RADIO LORS DUN VRAI VOL
+    if(now > TIME_BEFORE_MOTOR_ACTIVATION && !is_kill_mode_enable()){ // ATTENTION A BIEN REGLER LA VALEUR DE DELTA RADIO LORS DUN VRAI VOL
+      int motor_max_value = get_motor_max_value();
+      uint16_t MOT_FL = (uint16_t)float_clamp((base_thrust + torque.y - torque.x), 48, motor_max_value);
+      uint16_t MOT_FR = (uint16_t)float_clamp((base_thrust + torque.y + torque.x), 48, motor_max_value);
+      uint16_t MOT_BR = (uint16_t)float_clamp((base_thrust - torque.y + torque.x), 48, motor_max_value);
+      uint16_t MOT_BL = (uint16_t)float_clamp((base_thrust - torque.y - torque.x), 48, motor_max_value);
       
-      uint16_t MOT_FL = int_clamp(base_thrust - torque.y + torque.x, 48, 2047);
-      uint16_t MOT_FR = int_clamp(base_thrust - torque.y - torque.x, 48, 2047);
-      uint16_t MOT_BR = int_clamp(base_thrust + torque.y - torque.x, 48, 2047);
-      uint16_t MOT_BL = int_clamp(base_thrust + torque.y + torque.x, 48, 2047);
       motorFL.sendThrottle(MOT_FL);
       motorFR.sendThrottle(MOT_FR);
       motorBL.sendThrottle(MOT_BR);
@@ -192,6 +200,11 @@ void fc_task() {
           //Afficher également les commandes Moteur1,2,3,4////////////////////////////////////////////////////
           Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
       }
+    }else{
+      motorFL.sendThrottle(0);
+      motorFR.sendThrottle(0);
+      motorBL.sendThrottle(0);
+      motorBR.sendThrottle(0);
     }
 }
 
@@ -200,7 +213,7 @@ void setup() {
     i2c_master_init(I2C_MASTER_0_PORT, I2C_MASTER_0_SDA_IO, I2C_MASTER_0_SCL_IO, I2C_MASTER_0_FREQ_HZ);
     //i2c_master_init(I2C_MASTER_1_PORT, I2C_MASTER_1_SDA_IO, I2C_MASTER_1_SCL_IO, I2C_MASTER_1_FREQ_HZ);
     //qmc5883l_init();
-    setupNRF();
+    calibrate_gyro();
     //bool is_magne_present = isMagnePresent();
     //bool is_MPU_present = isMPUPresent();
     //I2C_init_error = !is_magne_present || !is_MPU_present;
@@ -234,10 +247,10 @@ void setup() {
       motorBR.sendThrottle(t);
       delay(5);
     }
-    //setupNRF();
+    setupNRF();
 }
 
 
 void loop() {
-    //fc_task();
+    fc_task();
 }

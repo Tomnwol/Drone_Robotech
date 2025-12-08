@@ -30,8 +30,9 @@ uint8_t SWKillSwitch = 0;
 
 void setupNRF() {
   if (!radio.begin()) {
-    Serial.println("Erreur: NRF24 non détecté !"); // else : allumer une led idéalement
+    //Serial.println("Erreur: NRF24 non détecté !"); // else : allumer une led idéalement
     //while (1);
+    return;
   }
   // Paramètres identiques à l'émetteur
   radio.setChannel(0);              // Même canal que l'Arduino
@@ -40,7 +41,7 @@ void setupNRF() {
   radio.openReadingPipe(0, pipeAddress); // Même adresse que l'émetteur
   radio.startListening();           // On passe en mode réception
 
-  Serial.println("NRF24 prêt à recevoir !");
+  //Serial.println("NRF24 prêt à recevoir !");
   radio_last_time = millis();
 }
 
@@ -49,16 +50,17 @@ void readNRFData() {
   radio_delta_time = millis() - radio_last_time;
   if (radio.available()) {
     radio.read(&payload, PAYLOAD_SIZE);  // Lecture du message
-    radio_last_time = millis();
-    //Serial.print("Message reçu: ");
-    joyThrottle = payload[0] + (payload[1]<<8);
-    joyYaw = payload[2] + (payload[3]<<8);
-    joyRoll = payload[4] + (payload[5]<<8);
-    joyPitch = payload[6] + (payload[7]<<8);
-    GP_Pot = payload[8] + (payload[9]<<8);
-    SWFailSafe = payload[10];
-    SWKillSwitch = payload[11];
-
+    if(payload[0] != NULL){
+      radio_last_time = millis();
+      //Serial.print("Message reçu: ");
+      joyThrottle = payload[0] + (payload[1]<<8);
+      joyYaw = payload[2] + (payload[3]<<8);
+      joyRoll = payload[4] + (payload[5]<<8);
+      joyPitch = payload[6] + (payload[7]<<8);
+      GP_Pot = payload[8] + (payload[9]<<8);
+      SWFailSafe = payload[10];
+      SWKillSwitch = payload[11];
+    }
     //Serial.print("Throttle : ");
     //Serial.println(joyThrottle);
   }

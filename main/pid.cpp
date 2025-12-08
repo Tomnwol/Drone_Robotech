@@ -35,8 +35,12 @@ Vector3f get_torque(Vector3f omega_set, Vector3f omega_gyro, float dt){
         vec_scale(err_ang_rate_int, Ki_ang_rate)
     );
 
+    //float torque_amplitude = 50.0; // valeur d'amplitude empirique mesurée avec Kp = 5 et Ki = 0.5
+    //torque = vec_scale(torque, 500.0f/torque_amplitude); // On veut un torque entre -500 et 500 
+    //torque = vec_clamp(torque, (Vector3f){-500,-500,0}, (Vector3f){500,500,0});
+
     float torque_amplitude = 50.0; // valeur d'amplitude empirique mesurée avec Kp = 5 et Ki = 0.5
-    torque = vec_scale(torque, 500.0f/torque_amplitude); // On veut un torque entre -500 et 500 
-    torque = vec_clamp(torque, (Vector3f){-500,-500,0}, (Vector3f){500,500,0});
+    torque = vec_scale(torque, 100.0f/torque_amplitude); // On veut un torque entre -500 et 500 
+    torque = vec_clamp(torque, (Vector3f){-100,-100,0}, (Vector3f){100,100,0});
     return torque;
 }
