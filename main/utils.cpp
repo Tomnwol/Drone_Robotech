@@ -142,3 +142,21 @@ Euler quat_to_euler(Quaternion q) {
 
     return e;
 }
+
+float slew_limit(float target, float prev, float slew_rate, float dt) {
+    float max_delta = slew_rate * dt;
+    float delta = target - prev;
+    if (delta >  max_delta) delta =  max_delta;
+    if (delta < -max_delta) delta = -max_delta;
+    return prev + delta;
+}
+
+float throttle_curve(float in, float expo)
+{
+    // in ∈ [0 ; 1]
+    if (in < 0) in = 0;
+    if (in > 1) in = 1;
+
+    // Courbe type Betaflight
+    return expo * in * in * in + (1.0f - expo) * in;
+}

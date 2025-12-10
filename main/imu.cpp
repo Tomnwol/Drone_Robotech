@@ -4,7 +4,7 @@
 
 
 //#define PI 3.14159265
-Vector3f gyro_offset = {0};
+Vector3f gyro_offset = {-5, -705, -144};
 
 void qmc5883l_init(void) { // Voir datasheet https://www.qstcorp.com/upload/pdf/202202/%EF%BC%88%E5%B7%B2%E4%BC%A0%EF%BC%8913-52-19%20QMC5883P%20Datasheet%20Rev.C(1).pdf
     // Reset
@@ -44,7 +44,7 @@ void calibrate_gyro() {
     gyro_offset.y = (float)sum_y / samples;
     gyro_offset.z = (float)sum_z / samples;
 
-    //printf("Calibration gyro -> offset: X=%.2f Y=%.2f Z=%.2f", gyro_offset.x, gyro_offset.y, gyro_offset.z);
+    //Serial.printf("Calibration gyro -> offset: X=%.2f Y=%.2f Z=%.2f\n", gyro_offset.x, gyro_offset.y, gyro_offset.z);
 }
 
 bool isMagnePresent() {

@@ -1,12 +1,12 @@
 %TF.GenerationSoftware,KiCad,Pcbnew,9.0.5*%
-%TF.CreationDate,2025-12-04T02:48:25+01:00*%
+%TF.CreationDate,2025-12-09T20:55:15+01:00*%
 %TF.ProjectId,Manette drone Robotech,4d616e65-7474-4652-9064-726f6e652052,rev?*%
 %TF.SameCoordinates,Original*%
 %TF.FileFunction,Soldermask,Top*%
 %TF.FilePolarity,Negative*%
 %FSLAX46Y46*%
 G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
-G04 Created by KiCad (PCBNEW 9.0.5) date 2025-12-04 02:48:25*
+G04 Created by KiCad (PCBNEW 9.0.5) date 2025-12-09 20:55:15*
 %MOMM*%
 %LPD*%
 G01*

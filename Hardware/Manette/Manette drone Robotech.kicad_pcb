@@ -4181,7 +4181,7 @@
 			)
 		)
 		(property "Value" "NRF_RADIO"
-			(at 6.24 3.81 180)
+			(at 7.84 3.78 180)
 			(layer "F.Fab")
 			(uuid "87b6968f-cff2-408b-9909-e5321f2e2391")
 			(effects

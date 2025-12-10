@@ -22,7 +22,7 @@ DShotRMT motorFR(MOTOR_FR_PIN, MODE, false);
 DShotRMT motorBL(MOTOR_BL_PIN, MODE, false);
 DShotRMT motorBR(MOTOR_BR_PIN, MODE, false);
 
-#define TIME_BEFORE_MOTOR_ACTIVATION 10000000
+#define TIME_BEFORE_MOTOR_ACTIVATION 20000000
 #define BASE_THRUST_MIN 100
 #define BASE_THRUST_MAX 1900
 #define BASE_THRUST_MAX_FAILSAFE 800
@@ -30,6 +30,9 @@ DShotRMT motorBR(MOTOR_BR_PIN, MODE, false);
 
 #define MOTOR_MAX_VALUE 2047
 #define MOTOR_FAILSAFE_MAX_VALUE 1000
+
+#define MOTOR_SLEW_RATE 2000 //DSHOT units/s 
+
 int failsafe_mode = 0; /* 0->OK  1->Activation FS par radio  2->Communication perdue */
 bool killswitch_enable = false; /* Si le mode KS est activé, il ne pourra plus être désactivé avant redémarrage */ 
 
@@ -52,7 +55,7 @@ void fill_queues(Vector3f accel_vect, Vector3f gyro_vect, Vector3f magne_vect){
 }
 
 void passes_bas(float dt){
-    float f_c_acce = 280.;
+    float f_c_acce = 60.;
     float f_c_gyro = 130.;
     float f_c_magne = 50.;
     tab_acce[0][0] = passe_bas(tab_acce[0][0], tab_acce[0][1], dt, f_c_acce);
@@ -68,6 +71,7 @@ void passes_bas(float dt){
     tab_magne[2][0] = passe_bas(tab_magne[2][0], tab_magne[2][1], dt, f_c_magne);
 }
 
+
 float get_base_thrust_max(){
     if (failsafe_mode){
       return BASE_THRUST_MAX_FAILSAFE;
@@ -76,7 +80,7 @@ float get_base_thrust_max(){
     }
 }
 
-int get_motor_max_value(){
+float get_motor_max_value(){
     if (failsafe_mode){
       return MOTOR_FAILSAFE_MAX_VALUE;
     }else{
@@ -90,12 +94,13 @@ bool is_kill_mode_enable(){ /* Non réversible mode -> désactivation des moteur
       killswitch_enable = true;
       return true;
     }*/
-    if (SWKillSwitch){ // Si la radio a reçu un signal KillSwitch
+    /*if (SWKillSwitch){ // Si la radio a reçu un signal KillSwitch
       killswitch_enable = true;
       return true;
     }else{
       return false;
-    }
+    }*/
+    return false;
   }else{
     return true;
   }
@@ -115,7 +120,10 @@ void fc_task() {
     static unsigned long lastTime_inner = 0;
     static int debug_counter = 0;
     
-    
+    static float prev_mFL = 48.0f;
+    static float prev_mFR = 48.0f;
+    static float prev_mBR = 48.0f;
+    static float prev_mBL = 48.0f;
 
     debug_counter_inner++;
 
@@ -125,7 +133,7 @@ void fc_task() {
     static Vector3f magne_vect = {0, 0, 0};
 
     unsigned long now = micros(); // microsecondes
-    float dt_inner = (now - lastTime_inner) / 1000000.0f; // s
+    float dt_inner = (now - lastTime_inner) / 1000000.0f; // s [Si bug -> Vérifier que dt_inner ne vaut jamais 0]
     lastTime_inner = now;
 
     // Lecture capteurs
@@ -159,6 +167,7 @@ void fc_task() {
       
         Euler att = quat_to_euler(q_drone); // Obtiens l'attitude en Euler
         const float MAX_ANGLE_RAD = 45.0f * M_PI / 180.0f;
+        //Serial.printf("roll = %f, pitch = %f\n", att.roll*180./M_PI, att.pitch*180./M_PI);
         if (now > TIME_BEFORE_MOTOR_ACTIVATION * 0.8 && (fabs(att.roll) > MAX_ANGLE_RAD || fabs(att.pitch) > MAX_ANGLE_RAD)){
           killswitch_enable = true;
         }
@@ -173,7 +182,8 @@ void fc_task() {
     float base_thrust_max = get_base_thrust_max();
     float base_thrust;
     if (failsafe_mode != 2){
-      base_thrust = float_remap((float)joyThrottle, 0, 1023, BASE_THRUST_MIN, base_thrust_max); //Récupérer la valeur de la télécommande
+      float curved_joyThrottle = throttle_curve((float)joyThrottle, 0.3); // On pourrait passer à des courbes plus complexes, voir https://www.wearefpv.fr/reglage-courbe-des-gaz-20230510/
+      base_thrust = float_remap(curved_joyThrottle, 0, 1023, BASE_THRUST_MIN, base_thrust_max); //Récupérer la valeur de la télécommande
     }else{ // FS 2 -> Communication perdue
       base_thrust = BASE_THRUST_FAILSAFE_AUTO;
     }
@@ -182,13 +192,24 @@ void fc_task() {
 
     // Remarque: sur ce montage, l'IMU est orientée de 90°
     // => gyro.x = roulis (roll), gyro.y = tangage (pitch)
-    //On peut viser : torque.x, torque.y ∈ [-500, +500] & base_thrust ∈ [100 à 1900]
+    //On peut viser : torque.x, torque.y ∈ [-100, +100] & base_thrust ∈ [100 à 1900]
     if(now > TIME_BEFORE_MOTOR_ACTIVATION && !is_kill_mode_enable()){ // ATTENTION A BIEN REGLER LA VALEUR DE DELTA RADIO LORS DUN VRAI VOL
-      int motor_max_value = get_motor_max_value();
-      uint16_t MOT_FL = (uint16_t)float_clamp((base_thrust + torque.y - torque.x), 48, motor_max_value);
-      uint16_t MOT_FR = (uint16_t)float_clamp((base_thrust + torque.y + torque.x), 48, motor_max_value);
-      uint16_t MOT_BR = (uint16_t)float_clamp((base_thrust - torque.y + torque.x), 48, motor_max_value);
-      uint16_t MOT_BL = (uint16_t)float_clamp((base_thrust - torque.y - torque.x), 48, motor_max_value);
+      float motor_max_value = get_motor_max_value();
+      float mFL_target = float_clamp((base_thrust + torque.y - torque.x), 48.0, motor_max_value);
+      float mFR_target = float_clamp((base_thrust + torque.y + torque.x), 48.0, motor_max_value);
+      float mBR_target = float_clamp((base_thrust - torque.y + torque.x), 48.0, motor_max_value);
+      float mBL_target = float_clamp((base_thrust - torque.y - torque.x), 48.0, motor_max_value);
+
+      // Appliquer slew limiter par moteur
+      prev_mFL = slew_limit(mFL_target, prev_mFL, MOTOR_SLEW_RATE, dt_inner);
+      prev_mFR = slew_limit(mFR_target, prev_mFR, MOTOR_SLEW_RATE, dt_inner);
+      prev_mBR = slew_limit(mBR_target, prev_mBR, MOTOR_SLEW_RATE, dt_inner);
+      prev_mBL = slew_limit(mBL_target, prev_mBL, MOTOR_SLEW_RATE, dt_inner);
+
+      uint16_t MOT_FL = (uint16_t)float_clamp(prev_mFL, 48.0, motor_max_value);
+      uint16_t MOT_FR = (uint16_t)float_clamp(prev_mFR, 48.0, motor_max_value);
+      uint16_t MOT_BR = (uint16_t)float_clamp(prev_mBR, 48.0, motor_max_value);
+      uint16_t MOT_BL = (uint16_t)float_clamp(prev_mBL, 48.0, motor_max_value);
       
       motorFL.sendThrottle(MOT_FL);
       motorFR.sendThrottle(MOT_FR);
@@ -198,9 +219,10 @@ void fc_task() {
       if (debug_counter >= 100) {
           debug_counter = 0;
           //Afficher également les commandes Moteur1,2,3,4////////////////////////////////////////////////////
-          Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
+          //Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
       }
     }else{
+      prev_mFL = 48.0f; prev_mFR = 48.0f; prev_mBR = 48.0f; prev_mBL = 48.0f;
       motorFL.sendThrottle(0);
       motorFR.sendThrottle(0);
       motorBL.sendThrottle(0);
@@ -217,12 +239,22 @@ void setup() {
     //bool is_magne_present = isMagnePresent();
     //bool is_MPU_present = isMPUPresent();
     //I2C_init_error = !is_magne_present || !is_MPU_present;
-    delay(500); //JTAG Delay test
+    //motorFL.setMotorSpinDirection(false);
+    //motorFR.setMotorSpinDirection(true);
+    //motorBL.setMotorSpinDirection(false);
+    //motorBR.setMotorSpinDirection(true);
+    delay(50); //JTAG Delay test
     motorFL.begin();
     motorFR.begin();
     motorBL.begin();
     motorBR.begin();
-    delay(2);
+    delay(200);
+    //motorBL reverse?
+    //motorFR reverse?
+    //motorFL.setMotorSpinDirection(false);
+    //motorFR.setMotorSpinDirection(true);
+    //motorBL.setMotorSpinDirection(false);
+    //motorBR.setMotorSpinDirection(true);
     unsigned long start = millis();
     while (millis() - start < 1000) {
       motorFL.sendThrottle(0);
@@ -231,7 +263,7 @@ void setup() {
       motorBR.sendThrottle(0);
       delay(2);
     }
-    delay(500);
+    /*delay(500);
     for (uint16_t t = 48; t <= 200; ++t) {
       motorFL.sendThrottle(t);
       motorFR.sendThrottle(t);
@@ -246,7 +278,7 @@ void setup() {
       motorBL.sendThrottle(t);
       motorBR.sendThrottle(t);
       delay(5);
-    }
+    }*/
     setupNRF();
 }
 

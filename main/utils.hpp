@@ -21,4 +21,6 @@ float float_clamp(float value, float min, float max);
 uint16_t int_clamp(uint16_t value, uint16_t min, uint16_t max);
 float float_remap(float x, float in_min, float in_max, float out_min, float out_max);
 Euler quat_to_euler(Quaternion q);
+float slew_limit(float target, float prev, float slew_rate, float dt); 
+float throttle_curve(float in, float expo);
 #endif

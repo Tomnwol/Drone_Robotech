@@ -18,6 +18,7 @@ Vector3f get_angular_rate_command(Euler att, Euler att_desired){
   return {omega_roll, omega_pitch, 0.0f};
 }
 
+
 Vector3f get_torque(Vector3f omega_set, Vector3f omega_gyro, float dt){
     Vector3f err_ang_rate = vec_sub(omega_set, omega_gyro);
     float Kp_ang_rate = 5; //Mettre un Kp plus faible, voir les valeurs min et max de variation, puis remap pour le dshot
