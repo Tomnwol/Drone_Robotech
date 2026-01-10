@@ -20,7 +20,7 @@ char payload[PAYLOAD_SIZE];
 unsigned long radio_delta_time = 0; /*Sert à activer le Failsafe mode en cas de non-communication prolongée*/
 unsigned long radio_last_time = 0;
 
-uint16_t joyThrottle = 0; //analogRead(A0);
+uint16_t joyThrottle = 10; //Armer le drone  
 uint16_t joyYaw = 0;
 uint16_t joyRoll = 0;
 uint16_t joyPitch = 0;
@@ -30,13 +30,15 @@ uint8_t SWKillSwitch = 0;
 
 void setupNRF() {
   if (!radio.begin()) {
-    //Serial.println("Erreur: NRF24 non détecté !"); // else : allumer une led idéalement
-    //while (1);
+    Serial.println("Erreur: NRF24 non détecté !"); // else : allumer une led idéalement
+    while (1);
     return;
   }
   // Paramètres identiques à l'émetteur
+  radio.setAutoAck(false);   // DÉSACTIVE LES ACK
+  radio.setRetries(0, 0);    // ⬅️ aucune tentative de retry
   radio.setChannel(0);              // Même canal que l'Arduino
-  radio.setPALevel(RF24_PA_HIGH);    // Même puissance
+  radio.setPALevel(RF24_PA_LOW);    // Même puissance
   radio.setDataRate(RF24_1MBPS);    // Même débit
   radio.openReadingPipe(0, pipeAddress); // Même adresse que l'émetteur
   radio.startListening();           // On passe en mode réception
