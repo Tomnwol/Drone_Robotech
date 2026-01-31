@@ -12,6 +12,7 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QTimer>
+#include <QKeyEvent>
 #include <iostream>
 
 #include "serial.hpp"
@@ -19,16 +20,28 @@
 #define DSHOT_MIN 48
 #define DSHOT_MAX 2047
 
-#define K_p 1
-#define K_i 1
+#define KP_INITIAL_VALUE 1
+#define KI_INITIAL_VALUE 1
 
-QSerialPort* serial = new QSerialPort();
+Payload payload;
+
+class NoKeyboardSpinBox : public QDoubleSpinBox {
+public:
+    using QDoubleSpinBox::QDoubleSpinBox;
+
+protected:
+    void keyPressEvent(QKeyEvent *event) override {
+        event->ignore(); // ignore TOUT clavier
+    }
+};
+
 
 int main(int argc, char *argv[])
 {
     /*APPLICATION SETUP*/
     QApplication app(argc, argv);
     QWidget window;
+    QSerialPort* serial = new QSerialPort(&window);
     window.setWindowTitle("Drone Controller Interface");
     QVBoxLayout layout;
 
@@ -44,6 +57,7 @@ int main(int argc, char *argv[])
     QGroupBox *securityGroupBox = new QGroupBox("Security");
     QCheckBox *FS_Check = new QCheckBox("FailSafe Switch (toggle on F)");
     QCheckBox *killCheck = new QCheckBox("Kill Switch (space bar)");
+    FS_Check->setChecked(true);
     QVBoxLayout *securityVbox = new QVBoxLayout;
     securityVbox->addWidget(FS_Check);
     securityVbox->addWidget(killCheck);
@@ -57,6 +71,7 @@ int main(int argc, char *argv[])
     QSlider *throttleSlider = new QSlider(Qt::Horizontal);
     throttleSlider->setRange(DSHOT_MIN, DSHOT_MAX);
     throttleSlider->setValue(DSHOT_MIN);
+    payload.throttle = DSHOT_MIN;
     throttleLabel->setText("Throttle Value : " + QString::number(throttleSlider->value()));
     motorsVbox->addWidget(throttleLabel);
     motorsVbox->addWidget(throttleSlider);
@@ -67,17 +82,19 @@ int main(int argc, char *argv[])
     QVBoxLayout *vbox_PI = new QVBoxLayout;
     QLabel *kpLabel = new QLabel("Kp:");
     QDoubleSpinBox *kpSpin = new QDoubleSpinBox();
-    kpSpin->setRange(0.0, 100.0);    // plage de valeurs
-    kpSpin->setSingleStep(0.1);      // incrément à chaque flèche
-    kpSpin->setValue(1.0);           // valeur par défaut
+    kpSpin->setRange(1.0, 100.0);    // plage de valeurs
+    kpSpin->setSingleStep(0.05);      // incrément à chaque flèche
+    kpSpin->setValue(KP_INITIAL_VALUE);           // valeur par défaut
     kpSpin->setDecimals(2);          // nombre de décimales affichées
+    payload.KP = KP_INITIAL_VALUE;
 
     QLabel *kiLabel = new QLabel("Ki:");
     QDoubleSpinBox *kiSpin = new QDoubleSpinBox();
-    kiSpin->setRange(0.0, 100.0);    // plage de valeurs
-    kiSpin->setSingleStep(0.1);      // incrément à chaque flèche
-    kiSpin->setValue(1.0);           // valeur par défaut
+    kiSpin->setRange(1.0, 100.0);    // plage de valeurs
+    kiSpin->setSingleStep(0.05);      // incrément à chaque flèche
+    kiSpin->setValue(KI_INITIAL_VALUE);           // valeur par défaut
     kiSpin->setDecimals(2);          // nombre de décimales affichées
+    payload.KI = KI_INITIAL_VALUE;
 
     vbox_PI->addWidget(kpLabel);
     vbox_PI->addWidget(kpSpin);
@@ -105,7 +122,7 @@ int main(int argc, char *argv[])
     controllerVbox->addWidget(securityGroupBox);
     controllerGroupBox->setLayout(controllerVbox);
 
-    /*0.Main Box*/
+    /* 0.Main Box */
     QGroupBox *mainGroupBox = new QGroupBox("");
     QHBoxLayout *mainHBox = new QHBoxLayout;
     mainHBox->addWidget(startGroupBox);
@@ -113,32 +130,58 @@ int main(int argc, char *argv[])
     mainHBox->addWidget(controllerGroupBox);
     mainGroupBox->setLayout(mainHBox);
 
-    /*Display*/
+    /* Display */
     layout.addWidget(mainGroupBox);
     window.setLayout(&layout);
     window.show();
 
-    /*Connections*/
+    /* Connections */
     QShortcut *FS_Shortcut = new QShortcut(QKeySequence(Qt::Key_F), &window);
     QObject::connect(FS_Shortcut, &QShortcut::activated, [&]() { //Active/Désactive la limitation moteur (côté drone)
         FS_Check->setChecked(not FS_Check->isChecked());
+        payload.failSafeSwitch = 1; //Update value for UART
     });
 
+    bool KS_enable = false;
     QShortcut *killShortcut = new QShortcut(QKeySequence(Qt::Key_Space), &window);
-    QObject::connect(killShortcut, &QShortcut::activated, [&]() { //Désactive le drone
-        killCheck->setChecked(true);
+    QObject::connect(killShortcut, &QShortcut::activated, [&KS_enable, killCheck]() { //Désactive le drone
+        if (KS_enable){
+            killCheck->setChecked(true);
+
+            payload.killSwitch = 1; //Update value for UART
+        }
+    });
+
+    QObject::connect(killCheck, &QCheckBox::toggled, [&](bool checked){ // Désactive l'option KS une fois activée
+        killCheck->setEnabled(false);
     });
 
     QObject::connect(throttleSlider, &QSlider::valueChanged, [throttleLabel](int value){ //Update la valeur de Throttle
         throttleLabel->setText("Throttle Value : " + QString::number(value));
+        payload.throttle = value;  //Update value for UART
     });
 
-    QObject::connect(serialCheck, &QCheckBox::toggled, [controllerGroupBox,serialCheck](bool checked){
-        controllerGroupBox->setEnabled(checked); // Active la manette et lance la communcation série
+    QObject::connect(serialCheck, &QCheckBox::toggled, [&, kpSpin, kiSpin, PI_GroupBox, controllerGroupBox,serialCheck, serial, &KS_enable](bool checked){ // Active la manette et lance la communcation série
+        controllerGroupBox->setEnabled(true);
+        KS_enable = true;
+        kpSpin->setFocusPolicy(Qt::NoFocus);
+        kiSpin->setFocusPolicy(Qt::NoFocus);
         serialCheck->setEnabled(false);
         configure_serial(serial);
     });
 
+
+    QObject::connect(kpSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+                     [kpSpin](double value){
+                         payload.KP = (uint8_t)value;
+                     }
+    );
+
+    QObject::connect(kiSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+                     [kiSpin](double value){
+                         payload.KI = (uint8_t)value;
+                     }
+    );
 
 
     return app.exec();

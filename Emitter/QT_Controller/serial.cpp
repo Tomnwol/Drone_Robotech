@@ -15,22 +15,25 @@ void configure_serial(QSerialPort* serial){
     serial->setStopBits(QSerialPort::OneStop);
     serial->setFlowControl(QSerialPort::NoFlowControl);
 
-    if (!serial->open(QIODevice::ReadWrite)) {
+    /*if (!serial->open(QIODevice::ReadWrite)) {
         std::cout << "Failed to open serial port\n";
         return;
-    }
+    }*/
     QTimer *uartTimer = new QTimer(serial);
     uartTimer->setInterval(10);
 
     QObject::connect(uartTimer, &QTimer::timeout,
                      [serial]() {
                          QByteArray frame;
-                         frame.append(0xAA);
-                         frame.append(0x01);
-                         frame.append(0x55);
-
-                         serial->write(frame);
-                         std::cout << "UART frame sent\n";
+                         frame.append(payload.throttle >> 8); //Throttle
+                         frame.append(payload.throttle && 255);
+                         frame.append(payload.killSwitch); //KillSwitch
+                         frame.append(payload.failSafeSwitch); //FailSafe
+                         frame.append(payload.KP); //KP
+                         frame.append(payload.KI); //KI
+                         std::cout << "throttle: " << static_cast<int>(payload.throttle) << "\n";
+                         //serial->write(frame);
+                         //std::cout << "UART frame sent\n";
                      });
 
     uartTimer->start();
