@@ -9,8 +9,12 @@
 #include <QShortcut>
 #include <QDoubleSpinBox>
 #include <QFont>
+#include <QSerialPort>
+#include <QSerialPortInfo>
+#include <QTimer>
+#include <iostream>
 
-#define UART_BAUDRATE 115200
+#include "serial.hpp"
 
 #define DSHOT_MIN 48
 #define DSHOT_MAX 2047
@@ -18,7 +22,7 @@
 #define K_p 1
 #define K_i 1
 
-//bool serialReady = false;
+QSerialPort* serial = new QSerialPort();
 
 int main(int argc, char *argv[])
 {
@@ -31,7 +35,7 @@ int main(int argc, char *argv[])
     /***2.Communication***/
     QGroupBox *communicationGroupBox = new QGroupBox("Communication");
     QVBoxLayout *communicationVbox = new QVBoxLayout;
-    QString serialBoxName = QString("Serial (%1)").arg(UART_BAUDRATE);
+    QString serialBoxName = QString("Serial (%1)").arg(UART_BAUDRATE_STR);
     QCheckBox *serialCheck = new QCheckBox(serialBoxName);
     communicationVbox->addWidget(serialCheck);
     communicationGroupBox->setLayout(communicationVbox);
@@ -130,8 +134,9 @@ int main(int argc, char *argv[])
     });
 
     QObject::connect(serialCheck, &QCheckBox::toggled, [controllerGroupBox,serialCheck](bool checked){
-        controllerGroupBox->setEnabled(checked);
+        controllerGroupBox->setEnabled(checked); // Active la manette et lance la communcation série
         serialCheck->setEnabled(false);
+        configure_serial(serial);
     });
 
 
