@@ -1,3 +1,4 @@
+#include "NRF_receiver.hpp"
 #include "types.hpp"
 #include "utils.hpp"
 #include "pid.hpp"
@@ -20,11 +21,14 @@ Vector3f get_angular_rate_command(Euler att, Euler att_desired){
 
 
 Vector3f get_torque(Vector3f omega_set, Vector3f omega_gyro, float dt){
+    #define TORQUE_AMP_MAX 150.0f
     Vector3f err_ang_rate = vec_sub(omega_set, omega_gyro);
-    float Kp_ang_rate = 5; //Mettre un Kp plus faible, voir les valeurs min et max de variation, puis remap pour le dshot
-    float Ki_ang_rate = 0.5f;
-    Vector3f integration_min = {-0.5, -0.5, 0};  
-    Vector3f integration_max = {0.5, 0.5, 0};      // Limite pour l'intégrateur (à ajuster selon essais)
+    float Kp_ang_rate = QT_KP; //Mettre un Kp plus faible, voir les valeurs min et max de variation, puis remap pour le dshot
+    float Ki_ang_rate = QT_KI;
+
+    float integration_max_value = (QT_KI != 0.0f) ? (TORQUE_AMP_MAX / QT_KI) : 0.0f; // Si Ki == 0 => 0
+    Vector3f integration_min = {-integration_max_value, -integration_max_value, 0};
+    Vector3f integration_max = {integration_max_value, integration_max_value, 0};      // Limite pour l'intégrateur (à ajuster selon essais)
     static Vector3f err_ang_rate_int = {0, 0, 0};
     // Accumulation de l'intégrateur
     err_ang_rate_int = vec_add( err_ang_rate_int , vec_scale(err_ang_rate, dt) );
@@ -37,11 +41,9 @@ Vector3f get_torque(Vector3f omega_set, Vector3f omega_gyro, float dt){
     );
 
     //float torque_amplitude = 50.0; // valeur d'amplitude empirique mesurée avec Kp = 5 et Ki = 0.5
-    //torque = vec_scale(torque, 500.0f/torque_amplitude); // On veut un torque entre -500 et 500 
+    //torque = vec_scale(torque, 500.0f/torque_amplitude); // On veut un torque entre -500 et 500
     //torque = vec_clamp(torque, (Vector3f){-500,-500,0}, (Vector3f){500,500,0});
 
-    float torque_amplitude = 50.0; // valeur d'amplitude empirique mesurée avec Kp = 5 et Ki = 0.5
-    torque = vec_scale(torque, 100.0f/torque_amplitude); // On veut un torque entre -500 et 500 
-    torque = vec_clamp(torque, (Vector3f){-100,-100,0}, (Vector3f){100,100,0});
+    torque = vec_clamp(torque, (Vector3f){-TORQUE_AMP_MAX,-TORQUE_AMP_MAX,0}, (Vector3f){TORQUE_AMP_MAX,TORQUE_AMP_MAX,0});
     return torque;
 }

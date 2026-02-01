@@ -20,8 +20,8 @@
 #define DSHOT_MIN 48
 #define DSHOT_MAX 2047
 
-#define KP_INITIAL_VALUE 1
-#define KI_INITIAL_VALUE 1
+#define KP_INITIAL_VALUE 5
+#define KI_INITIAL_VALUE 0.5f
 
 Payload payload;
 
@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
     QCheckBox *FS_Check = new QCheckBox("FailSafe Switch (toggle on F)");
     QCheckBox *killCheck = new QCheckBox("Kill Switch (space bar)");
     FS_Check->setChecked(true);
+    payload.failSafeSwitch = 1;
     QVBoxLayout *securityVbox = new QVBoxLayout;
     securityVbox->addWidget(FS_Check);
     securityVbox->addWidget(killCheck);
@@ -86,15 +87,15 @@ int main(int argc, char *argv[])
     kpSpin->setSingleStep(0.05);      // incrément à chaque flèche
     kpSpin->setValue(KP_INITIAL_VALUE);           // valeur par défaut
     kpSpin->setDecimals(2);          // nombre de décimales affichées
-    payload.KP = KP_INITIAL_VALUE;
+    payload.KP = KP_INITIAL_VALUE * 100;
 
     QLabel *kiLabel = new QLabel("Ki:");
     QDoubleSpinBox *kiSpin = new QDoubleSpinBox();
-    kiSpin->setRange(1.0, 100.0);    // plage de valeurs
+    kiSpin->setRange(0.0, 100.0);    // plage de valeurs
     kiSpin->setSingleStep(0.05);      // incrément à chaque flèche
     kiSpin->setValue(KI_INITIAL_VALUE);           // valeur par défaut
     kiSpin->setDecimals(2);          // nombre de décimales affichées
-    payload.KI = KI_INITIAL_VALUE;
+    payload.KI = KI_INITIAL_VALUE * 100;
 
     vbox_PI->addWidget(kpLabel);
     vbox_PI->addWidget(kpSpin);
@@ -139,7 +140,7 @@ int main(int argc, char *argv[])
     QShortcut *FS_Shortcut = new QShortcut(QKeySequence(Qt::Key_F), &window);
     QObject::connect(FS_Shortcut, &QShortcut::activated, [&]() { //Active/Désactive la limitation moteur (côté drone)
         FS_Check->setChecked(not FS_Check->isChecked());
-        payload.failSafeSwitch = 1; //Update value for UART
+        payload.failSafeSwitch = FS_Check->isChecked(); //Update value for UART
     });
 
     bool KS_enable = false;
@@ -147,12 +148,12 @@ int main(int argc, char *argv[])
     QObject::connect(killShortcut, &QShortcut::activated, [&KS_enable, killCheck]() { //Désactive le drone
         if (KS_enable){
             killCheck->setChecked(true);
-
             payload.killSwitch = 1; //Update value for UART
         }
     });
 
     QObject::connect(killCheck, &QCheckBox::toggled, [&](bool checked){ // Désactive l'option KS une fois activée
+        checked=checked; // no effect, avoid warning
         killCheck->setEnabled(false);
     });
 
@@ -161,7 +162,8 @@ int main(int argc, char *argv[])
         payload.throttle = value;  //Update value for UART
     });
 
-    QObject::connect(serialCheck, &QCheckBox::toggled, [&, kpSpin, kiSpin, PI_GroupBox, controllerGroupBox,serialCheck, serial, &KS_enable](bool checked){ // Active la manette et lance la communcation série
+    QObject::connect(serialCheck, &QCheckBox::toggled, [&, kpSpin, kiSpin, PI_GroupBox, controllerGroupBox,serialCheck, serial](bool checked){ // Active la manette et lance la communcation série
+        checked = checked; // no effect, avoid warning
         controllerGroupBox->setEnabled(true);
         KS_enable = true;
         kpSpin->setFocusPolicy(Qt::NoFocus);
@@ -173,13 +175,13 @@ int main(int argc, char *argv[])
 
     QObject::connect(kpSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
                      [kpSpin](double value){
-                         payload.KP = (uint8_t)value;
+                         payload.KP = (uint16_t)(value * 100);
                      }
     );
 
     QObject::connect(kiSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
                      [kiSpin](double value){
-                         payload.KI = (uint8_t)value;
+                         payload.KI = (uint16_t)(value * 100);
                      }
     );
 

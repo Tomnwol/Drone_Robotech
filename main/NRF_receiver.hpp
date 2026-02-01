@@ -9,6 +9,8 @@ extern uint16_t GP_Pot;
 extern uint8_t SWFailSafe;
 extern uint8_t SWKillSwitch;
 extern uint8_t SWKillSwitch;
+extern float QT_KP;
+extern float QT_KI;
 
 extern unsigned long radio_last_time;
 extern unsigned long radio_delta_time;
