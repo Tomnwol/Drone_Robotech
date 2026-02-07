@@ -34,7 +34,7 @@ DShotRMT motorBR(MOTOR_BR_PIN, MODE, false);
 #define MOTOR_FAILSAFE_MAX_VALUE 1000
 
 #define MOTOR_SLEW_RATE 2000 //DSHOT units/s 
-
+#define OFFSET_MOTOR_MAX 100
 int failsafe_mode = 0; /* 0->OK  1->Activation FS par radio  2->Communication perdue */
 bool killswitch_enable = false; /* Si le mode KS est activé, il ne pourra plus être désactivé avant redémarrage */ 
 
@@ -208,6 +208,7 @@ void fc_task() {
     passes_bas(dt_inner);
 
     float dt_outer = (now - lastTime_outter) / 1000000.0f; // s
+    /* OUTER LOOP */
     if (dt_outer > 0.004f) { // ~250 Hz
         lastTime_outter = now;
         float sampleFreqLocal = 1.0f / dt_outer;
@@ -234,7 +235,7 @@ void fc_task() {
         omega_set = get_angular_rate_command(att, att_desired);
     }
 
-    Vector3f torque = get_torque(omega_set, (Vector3f){tab_gyro[0][0], tab_gyro[1][0], tab_gyro[2][0]}, dt_inner);
+    Vector3f torque = get_torque(omega_set, (Vector3f){tab_gyro[0][0], tab_gyro[1][0], tab_gyro[2][0]}, (Vector3f){tab_gyro[0][1], tab_gyro[1][1], tab_gyro[2][1]}, dt_inner);
     
     if (killswitch_enable){
       error_loop_blink();
@@ -264,8 +265,6 @@ void fc_task() {
     float base_thrust_max = get_base_thrust_max();
     float base_thrust;
     if (failsafe_mode != 2){
-      //float curved_joyThrottle = throttle_curve((float)joyThrottle, 0.3); // On pourrait passer à des courbes plus complexes, voir https://www.wearefpv.fr/reglage-courbe-des-gaz-20230510/
-      //base_thrust = float_remap(curved_joyThrottle, 0, 1023, BASE_THRUST_MIN, base_thrust_max); //Récupérer la valeur de la télécommande
       base_thrust = (float)joyThrottle;
     }else{ // FS 2 -> Communication perdue
       base_thrust = BASE_THRUST_FAILSAFE_AUTO;
@@ -281,10 +280,10 @@ void fc_task() {
     // Remarque: sur ce montage, l'IMU est orientée de 90°
     // => gyro.x = roulis (roll), gyro.y = tangage (pitch)
     //On peut viser : torque.x, torque.y ∈ [-100, +100] & base_thrust ∈ [100 à 1900]
-    float mFL_target = float_clamp((base_thrust + torque.y - torque.x), 48.0, motor_max_value);
-    float mFR_target = float_clamp((base_thrust + torque.y + torque.x), 48.0, motor_max_value);
-    float mBR_target = float_clamp((base_thrust - torque.y + torque.x), 48.0, motor_max_value);
-    float mBL_target = float_clamp((base_thrust - torque.y - torque.x), 48.0, motor_max_value);
+    float mFL_target = float_clamp((base_thrust + torque.y - torque.x + uint8_clamp(offsetMotorFL, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
+    float mFR_target = float_clamp((base_thrust + torque.y + torque.x + uint8_clamp(offsetMotorFR, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
+    float mBR_target = float_clamp((base_thrust - torque.y + torque.x + uint8_clamp(offsetMotorBR, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
+    float mBL_target = float_clamp((base_thrust - torque.y - torque.x + uint8_clamp(offsetMotorBL, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
 
     // Appliquer slew limiter par moteur
     prev_mFL = slew_limit(mFL_target, prev_mFL, MOTOR_SLEW_RATE, dt_inner);
@@ -322,19 +321,8 @@ void setup() {
     pinMode(GP_LED, OUTPUT);
     digitalWrite(GP_LED, LOW);
     digitalWrite(ARM_LED, LOW);
-
-
     i2c_master_init(I2C_MASTER_0_PORT, I2C_MASTER_0_SDA_IO, I2C_MASTER_0_SCL_IO, I2C_MASTER_0_FREQ_HZ);
-    //i2c_master_init(I2C_MASTER_1_PORT, I2C_MASTER_1_SDA_IO, I2C_MASTER_1_SCL_IO, I2C_MASTER_1_FREQ_HZ);
-    //qmc5883l_init();
     calibrate_gyro();
-    //bool is_magne_present = isMagnePresent();
-    //bool is_MPU_present = isMPUPresent();
-    //I2C_init_error = !is_magne_present || !is_MPU_present;
-    //motorFL.setMotorSpinDirection(false);
-    //motorFR.setMotorSpinDirection(true);
-    //motorBL.setMotorSpinDirection(false);
-    //motorBR.setMotorSpinDirection(true);
     delay(100);
     motorFL.begin();
     motorFR.begin();
@@ -342,46 +330,6 @@ void setup() {
     motorBR.begin();
     motor_initial_sequence();
     delay(50); //JTAG Delay test
-    /*
-    motorFL.begin();
-    motorFR.begin();
-    motorBL.begin();
-    motorBR.begin();
-    
-    delay(200);
-    */
-    //motorBL reverse?
-    //motorFR reverse?
-    //motorFL.setMotorSpinDirection(false);
-    //motorFR.setMotorSpinDirection(true);
-    //motorBL.setMotorSpinDirection(false);
-    //motorBR.setMotorSpinDirection(true);
-    /*
-    unsigned long start = millis();
-    while (millis() - start < 1000) {
-      motorFL.sendThrottle(0);
-      motorFR.sendThrottle(0);
-      motorBL.sendThrottle(0);
-      motorBR.sendThrottle(0);
-      delay(2);
-    }
-    delay(500);
-    for (uint16_t t = 48; t <= 200; ++t) {
-      motorFL.sendThrottle(t);
-      motorFR.sendThrottle(t);
-      motorBL.sendThrottle(t);
-      motorBR.sendThrottle(t);
-      delay(5); // ramp lente
-    }
-    // Retour à zéro
-    for (uint16_t t = 200; t >= 48; --t) {
-      motorFL.sendThrottle(t);
-      motorFR.sendThrottle(t);
-      motorBL.sendThrottle(t);
-      motorBR.sendThrottle(t);
-      delay(5);
-    }
-    */
     setupNRF();
 }
 

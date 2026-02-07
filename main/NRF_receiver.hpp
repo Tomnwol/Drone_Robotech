@@ -11,6 +11,11 @@ extern uint8_t SWKillSwitch;
 extern uint8_t SWKillSwitch;
 extern float QT_KP;
 extern float QT_KI;
+extern float QT_KD;
+extern uint8_t offsetMotorFL;
+extern uint8_t offsetMotorFR;
+extern uint8_t offsetMotorBL;
+extern uint8_t offsetMotorBR;
 
 extern unsigned long radio_last_time;
 extern unsigned long radio_delta_time;

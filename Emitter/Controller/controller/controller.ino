@@ -15,11 +15,16 @@ struct QT_Payload {
   uint8_t failSafeSwitch;
   uint16_t KP;
   uint16_t KI;
+  uint16_t KD;
+  uint8_t offsetMotorFL;
+  uint8_t offsetMotorFR;
+  uint8_t offsetMotorBL;
+  uint8_t offsetMotorBR;
 };
 
 QT_Payload qt_payload;
 
-#define QT_PAYLOAD_SIZE 8 // OCTETS
+#define QT_PAYLOAD_SIZE 14 // OCTETS
 void setupNRF() {
   if (!radio.begin()) {
     Serial.println("Erreur: NRF24 non détecté !"); // else : allumer une led idéalement
@@ -49,6 +54,11 @@ void sendDataNRF(){
   uint8_t SWKillSwitch = qt_payload.killSwitch;
   uint16_t KP = qt_payload.KP;
   uint16_t KI = qt_payload.KI;
+  uint16_t KD = qt_payload.KD;
+  uint8_t offsetMotorFL = qt_payload.offsetMotorFL;
+  uint8_t offsetMotorFR = qt_payload.offsetMotorFR;
+  uint8_t offsetMotorBL = qt_payload.offsetMotorBL;
+  uint8_t offsetMotorBR = qt_payload.offsetMotorBR;
   /*Remplissage du payload*/
   NRF_Payload[0] = JoyThrottle & 255; // 255 = 0x11111111 (8 bits = sizeof(char))
   NRF_Payload[1] = JoyThrottle >> 8; // reste
@@ -66,7 +76,12 @@ void sendDataNRF(){
   NRF_Payload[13] = (KP>>8);
   NRF_Payload[14] = KI & 255;
   NRF_Payload[15] = (KI>>8);
-
+  NRF_Payload[16] = KD & 255;
+  NRF_Payload[17] = (KD>>8);
+  NRF_Payload[18] = offsetMotorFL;
+  NRF_Payload[19] = offsetMotorFR;
+  NRF_Payload[20] = offsetMotorBL;
+  NRF_Payload[21] = offsetMotorBR;
   radio.write(&NRF_Payload, sizeof(NRF_Payload));
   delay(5);
 }
@@ -92,6 +107,11 @@ void loop() {
         qt_payload.failSafeSwitch = buffer[3];
         qt_payload.KP             = (buffer[5] << 8) | buffer[4];
         qt_payload.KI             = (buffer[7] << 8) | buffer[6];
+        qt_payload.KD             = (buffer[9] << 8) | buffer[8];
+        qt_payload.offsetMotorFL  = buffer[10];
+        qt_payload.offsetMotorFR  = buffer[11];
+        qt_payload.offsetMotorBL  = buffer[12];
+        qt_payload.offsetMotorBR  = buffer[13];
 
         // ACK debug
         Serial.print("ACK throttle=");

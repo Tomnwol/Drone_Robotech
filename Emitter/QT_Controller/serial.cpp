@@ -52,6 +52,12 @@ void configure_serial(QSerialPort* serial){
                          frame.append(payload.KP >> 8);
                          frame.append(payload.KI & 255); //KI
                          frame.append(payload.KI >> 8);
+                         frame.append(payload.KD & 255); //KD
+                         frame.append(payload.KD >> 8);
+                         frame.append(payload.offsetMotorFL);
+                         frame.append(payload.offsetMotorFR);
+                         frame.append(payload.offsetMotorBL);
+                         frame.append(payload.offsetMotorBR);
                          frame.append('\n');
                          serial->write(frame);
                      });

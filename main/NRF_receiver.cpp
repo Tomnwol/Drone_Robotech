@@ -29,6 +29,11 @@ uint8_t SWFailSafe = 0;
 uint8_t SWKillSwitch = 0;
 float QT_KP = 0;
 float QT_KI = 0;
+float QT_KD = 0;
+uint8_t offsetMotorFL = 0;
+uint8_t offsetMotorFR = 0;
+uint8_t offsetMotorBL = 0;
+uint8_t offsetMotorBR = 0;
 void setupNRF() {
   if (!radio.begin()) {
     Serial.println("Erreur: NRF24 non détecté !"); // else : allumer une led idéalement
@@ -65,6 +70,11 @@ void readNRFData() {
       SWKillSwitch = payload[11];
       QT_KP = ((float)(uint16_t)(payload[12] + (payload[13]<<8))/100.0); // Récupération du KP et KI, en pensant bien à diviser 100 pour retrouver les 2 décimales
       QT_KI = ((float)(uint16_t)(payload[14] + (payload[15]<<8))/100.0);
+      QT_KD = ((float)(uint16_t)(payload[16] + (payload[17]<<8))/100.0);
+      offsetMotorFL = payload[18];
+      offsetMotorFR = payload[19];
+      offsetMotorBL = payload[20];
+      offsetMotorBR = payload[21];
     }
     //Serial.print("Throttle : ");
     //Serial.println(joyThrottle);

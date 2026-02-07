@@ -115,6 +115,16 @@ uint16_t int_clamp(uint16_t value, uint16_t min, uint16_t max){
     }
     return value;
 }
+
+uint8_t uint8_clamp(uint8_t value, uint8_t min, uint8_t max){
+    if (value < min){
+        return min;
+    }else if(value > max){
+        return max;
+    }
+    return value;
+}
+
 float float_remap(float x, float in_min, float in_max, float out_min, float out_max) {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }

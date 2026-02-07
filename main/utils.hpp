@@ -19,6 +19,7 @@ Vector3f vec_sub(Vector3f v1, Vector3f v2);
 Vector3f vec_clamp(Vector3f value, Vector3f min, Vector3f max);
 float float_clamp(float value, float min, float max);
 uint16_t int_clamp(uint16_t value, uint16_t min, uint16_t max);
+uint8_t uint8_clamp(uint8_t value, uint8_t min, uint8_t max);
 float float_remap(float x, float in_min, float in_max, float out_min, float out_max);
 Euler quat_to_euler(Quaternion q);
 float slew_limit(float target, float prev, float slew_rate, float dt); 

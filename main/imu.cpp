@@ -83,9 +83,7 @@ Vector3f read_gyro() {
 Vector3f read_magne() {
         uint8_t raw_magne[6];
         i2c_read_bytes(I2C_MASTER_1_PORT, QMC5883L_ADDR, QMC5883L_DATA_X_LSB, raw_magne, 6);
-        //int16_t magne_x = (raw_magne[3] << 8) | raw_magne[2];
-        //int16_t magne_y = (raw_magne[5] << 8) | raw_magne[4];
-        //int16_t magne_z = (raw_magne[1] << 8) | raw_magne[0];
+
         int16_t magne_x = (raw_magne[1] << 8) | raw_magne[0];
         int16_t magne_y = (raw_magne[3] << 8) | raw_magne[2];
         int16_t magne_z = (raw_magne[5] << 8) | raw_magne[4];
