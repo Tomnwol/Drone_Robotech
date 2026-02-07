@@ -35,10 +35,11 @@ void setupNRF() {
   radio.setAutoAck(false);   // DÉSACTIVE LES ACK
   radio.setRetries(0, 0);
   radio.setChannel(0);              // Même canal que l'Arduino
-  radio.setPALevel(RF24_PA_LOW);    // Même puissance
-  radio.setDataRate(RF24_1MBPS);    // Même débit
-  radio.openReadingPipe(0, pipeAddress); // Même adresse que l'émetteur
-  radio.stopListening();              // Arrêt de l'écoute du NRF24 (signifiant qu'on va émettre, et non recevoir, ici)
+
+  radio.openWritingPipe(pipeAddress);     // Ouverture du tunnel en ÉCRITURE, avec le "nom" qu'on lui a donné
+  radio.setDataRate(RF24_1MBPS);
+  radio.setPALevel(RF24_PA_LOW);
+  radio.stopListening();  // Arrêt de l'écoute du NRF24 (signifiant qu'on va émettre, et non recevoir, ici)         
 }
 
 void sendDataNRF(){
