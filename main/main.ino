@@ -144,10 +144,10 @@ bool arm_mode_enable(){
 
 bool is_kill_mode_enable(){ /* Non réversible mode -> désactivation des moteurs */
   if (killswitch_enable == false){
-    /*if (radio_delta_time > 5000){ //1500 ! Pour les TESTS ON MET + MAIS ATTENTION A BIEN REMETTRE 1500 PLUS TARD
+    if (radio_delta_time > 1000){ //1500 ! Pour les TESTS ON MET + MAIS ATTENTION A BIEN REMETTRE 1500 PLUS TARD
       killswitch_enable = true;
       return true;
-    }*/
+    }
     if (SWKillSwitch){ // Si la radio a reçu un signal KillSwitch
       killswitch_enable = true;
       return true;
