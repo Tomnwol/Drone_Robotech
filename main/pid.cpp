@@ -1,7 +1,10 @@
+#include <Arduino.h>
 #include "NRF_receiver.hpp"
 #include "types.hpp"
 #include "utils.hpp"
 #include "pid.hpp"
+
+
 
 Vector3f get_angular_rate_command(Euler att, Euler att_desired){
   // Calcul d’erreur
@@ -25,7 +28,7 @@ Vector3f get_torque(Vector3f omega_set, Vector3f omega_gyro, Vector3f prev_gyro,
     if(dt < 0.0005f) dt = 0.0005f; // Sécurité
     if(dt > 0.005f) dt = 0.005f;
 
-    #define TORQUE_AMP_MAX 150.0f
+    #define TORQUE_AMP_MAX 250.0f
     Vector3f err_ang_rate = vec_sub(omega_set, omega_gyro);
     float Kp_ang_rate = QT_KP; //Mettre un Kp plus faible, voir les valeurs min et max de variation, puis remap pour le dshot
     float Ki_ang_rate = QT_KI;
@@ -40,8 +43,11 @@ Vector3f get_torque(Vector3f omega_set, Vector3f omega_gyro, Vector3f prev_gyro,
     err_ang_rate_int = vec_add( err_ang_rate_int , vec_scale(err_ang_rate, dt) );
     // Saturation de l’intégrateur (anti-windup)
     err_ang_rate_int = vec_clamp(err_ang_rate_int, integration_min, integration_max);
-    if(joyThrottle < 100){ // On n'intègre pas au sol
+    static bool isFlying = false;
+    if(joyThrottle < 600 && isFlying == false){ // On n'intègre pas au sol
       err_ang_rate_int = (Vector3f){0,0,0};
+    }else{
+      isFlying = true;
     }
 
     /* DERIVATEUR */
