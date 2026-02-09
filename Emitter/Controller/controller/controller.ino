@@ -122,7 +122,9 @@ void loop() {
         Serial.print(" killSwitch=");
         Serial.print(qt_payload.killSwitch);
         Serial.print(" FS=");
-        Serial.println(qt_payload.failSafeSwitch);
+        Serial.print(qt_payload.failSafeSwitch);
+        Serial.print("offsetMotorBR=");
+        Serial.println(qt_payload.offsetMotorBR);
         sendDataNRF();
       }
       index = 0; // reset pour la prochaine trame
