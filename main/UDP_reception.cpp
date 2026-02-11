@@ -45,7 +45,7 @@ void readUDPData() {
     if (packetSize == 22) { // on attend 22 octets
         udp_last_time = millis();
         udp.read(payload, 22);
-        // Décodage identique à ton NRF
+
         joyThrottle = payload[0] + (payload[1]<<8);
         joyYaw      = payload[2] + (payload[3]<<8);
         joyRoll     = payload[4] + (payload[5]<<8);

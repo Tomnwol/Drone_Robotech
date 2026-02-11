@@ -18,8 +18,8 @@ typedef struct pl{
     uint16_t roll = 0;
     uint16_t pitch = 0;
     uint16_t GP_Pot = 0;
-    uint8_t killSwitch = 0;
     uint8_t failSafeSwitch = 0;
+    uint8_t killSwitch = 0;
     uint16_t KP = 0;
     uint16_t KI = 0;
     uint16_t KD = 0;

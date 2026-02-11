@@ -1,16 +1,14 @@
+#include "UDP.hpp"
 
-
-
+QUdpSocket* udpSocket = nullptr;
+QTimer* timer = nullptr;
 
 void configure_UDP(){
-    // --- Création de la socket UDP ---
-    QUdpSocket udpSocket;
+    udpSocket = new QUdpSocket();
+    timer = new QTimer();
+    timer->setInterval(20); // 20 ms → 50 Hz
 
-    // --- Timer pour envoi périodique ---
-    QTimer timer;
-    timer.setInterval(20); // 20 ms → 50 Hz
-
-    QObject::connect(&timer, &QTimer::timeout, [&]() {
+    QObject::connect(timer, &QTimer::timeout, []() {
         QByteArray frame;
         frame.resize(22); // Taille exacte de ton payload
 
@@ -25,8 +23,8 @@ void configure_UDP(){
         frame[7]  = (payload.pitch >> 8) & 0xFF;
         frame[8]  = payload.GP_Pot & 0xFF;
         frame[9]  = (payload.GP_Pot >> 8) & 0xFF;
-        frame[10] = payload.SWFailSafe;
-        frame[11] = payload.SWKillSwitch;
+        frame[10] = payload.failSafeSwitch;
+        frame[11] = payload.killSwitch;
         frame[12] = payload.KP & 0xFF;
         frame[13] = (payload.KP >> 8) & 0xFF;
         frame[14] = payload.KI & 0xFF;
@@ -39,10 +37,12 @@ void configure_UDP(){
         frame[21] = payload.offsetMotorBR;
 
         // Envoi UDP vers l'ESP32
-        qint64 sent = udpSocket.writeDatagram(frame, QHostAddress(ESP32_IP), ESP32_PORT);
+        qint64 sent = udpSocket->writeDatagram(frame, QHostAddress(ESP32_IP), ESP32_PORT);
         if (sent != frame.size()) {
-            qDebug() << "Erreur envoi UDP !";
+            std::cout << "Erreur envoi UDP !\n" ;
         }
-});
+    });
+    timer->start();
+    std::cout << "La communication UDP commence !\n" ;
+}
 
-timer.start();
