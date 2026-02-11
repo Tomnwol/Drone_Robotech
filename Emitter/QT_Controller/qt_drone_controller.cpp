@@ -15,8 +15,8 @@
 #include <QKeyEvent>
 #include <iostream>
 
-#include "serial.hpp"
-
+//#include "serial.hpp"
+#include "UDP.hpp"
 #define OFFSET_MOTOR_MAX 100
 
 #define DSHOT_MIN 48
@@ -51,9 +51,9 @@ int main(int argc, char *argv[])
     /***2.Communication***/
     QGroupBox *communicationGroupBox = new QGroupBox("Communication");
     QVBoxLayout *communicationVbox = new QVBoxLayout;
-    QString serialBoxName = QString("Serial (%1)").arg(UART_BAUDRATE_STR);
-    QCheckBox *serialCheck = new QCheckBox(serialBoxName);
-    communicationVbox->addWidget(serialCheck);
+    QString UDPBoxName = QString("UDP (%1)").arg(ESP32_PORT);
+    QCheckBox *UDPCheck = new QCheckBox(UDPBoxName);
+    communicationVbox->addWidget(UDPCheck);
     communicationGroupBox->setLayout(communicationVbox);
 
     /***2.Security Box***/
@@ -233,15 +233,15 @@ int main(int argc, char *argv[])
         payload.throttle = value;  //Update value for UART
     });
 
-    QObject::connect(serialCheck, &QCheckBox::toggled, [&, kpSpin, kiSpin, kdSpin, PID_GroupBox, controllerGroupBox,serialCheck, serial](bool checked){ // Active la manette et lance la communcation série
+    QObject::connect(UDPCheck, &QCheckBox::toggled, [&, kpSpin, kiSpin, kdSpin, PID_GroupBox, controllerGroupBox,UDPCheck, serial](bool checked){ // Active la manette et lance la communcation série
         checked = checked; // no effect, avoid warning
         controllerGroupBox->setEnabled(true);
         KS_enable = true;
         kpSpin->setFocusPolicy(Qt::NoFocus);
         kiSpin->setFocusPolicy(Qt::NoFocus);
         kdSpin->setFocusPolicy(Qt::NoFocus);
-        serialCheck->setEnabled(false);
-        configure_serial(serial);
+        UDPCheck->setEnabled(false);
+        configure_UDP();
     });
 
 

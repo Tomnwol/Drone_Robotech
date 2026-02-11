@@ -9,7 +9,8 @@
 #include "imu.hpp"
 #include "types.hpp"
 #include "utils.hpp"
-#include "NRF_receiver.hpp"
+#include "UDP_reception.hpp"
+//#include "NRF_receiver.hpp"
 #include "pid.hpp"
 
 static constexpr gpio_num_t MOTOR_FL_PIN = GPIO_NUM_13; //MOT1
@@ -37,7 +38,7 @@ DShotRMT motorBR(MOTOR_BR_PIN, MODE, false);
 #define OFFSET_MOTOR_MAX 100
 int failsafe_mode = 0; /* 0->OK  1->Activation FS par radio  2->Communication perdue */
 bool killswitch_enable = false; /* Si le mode KS est activé, il ne pourra plus être désactivé avant redémarrage */ 
-
+bool is_arm_mode_enable = false;
 #define SIZE_TAB  2
 float tab_acce[3][SIZE_TAB] = {{0},{0},{0}}; //stocke les dernières valeurs d'accélération
 float tab_gyro[3][SIZE_TAB] = {{0},{0},{0}}; //stocke les dernières valeurs du gyro
@@ -131,7 +132,7 @@ void motor_initial_sequence(){
 
 bool arm_mode_enable(){
   static int arming_counter = 0;
-  if (joyThrottle == 48 && radio_delta_time < 100){
+  if (joyThrottle == 48 && udp_delta_time < 100){
     arming_counter++;
     if (arming_counter >= 10){
       return true;
@@ -144,7 +145,7 @@ bool arm_mode_enable(){
 
 bool is_kill_mode_enable(){ /* Non réversible mode -> désactivation des moteurs */
   if (killswitch_enable == false){
-    if (radio_delta_time > 1000){ //1500 ! Pour les TESTS ON MET + MAIS ATTENTION A BIEN REMETTRE 1500 PLUS TARD
+    if (is_arm_mode_enable && (udp_delta_time > 1000)){ //1500 ! Pour les TESTS ON MET + MAIS ATTENTION A BIEN REMETTRE 1500 PLUS TARD
       killswitch_enable = true;
       return true;
     }
@@ -161,7 +162,7 @@ bool is_kill_mode_enable(){ /* Non réversible mode -> désactivation des moteur
 }
 
 void failsafe_mode_activation(){  /* 0->OK  1->Activation par radio  2->Communication perdue */
-  if (radio_delta_time > 500){ // La radio ne répond plus depuis 0.5s => failsafe mode => limiation moteur
+  if (is_arm_mode_enable && udp_delta_time > 500){ // La radio ne répond plus depuis 0.5s => failsafe mode => limiation moteur
     failsafe_mode = 2;
     return;
   }
@@ -171,6 +172,7 @@ void failsafe_mode_activation(){  /* 0->OK  1->Activation par radio  2->Communic
 void error_loop_blink(){
   while(1){
     delay(200);
+    Serial.println("KS_Activated");
     digitalWrite(GP_LED, HIGH);
     delay(200);
     digitalWrite(GP_LED, LOW);
@@ -182,8 +184,9 @@ void fc_task() {
     static unsigned long lastTime_outter = 0;
     static unsigned long lastTime_inner = 0;
     static int debug_counter = 0;
-
+    static int debug_counter2 = 0;
     debug_counter_inner++;
+    debug_counter2++;
 
     static int magne_compteur = 0;
     static Quaternion q_drone = {1, 0, 0, 0};
@@ -212,7 +215,7 @@ void fc_task() {
     if (dt_outer > 0.004f) { // ~250 Hz
         lastTime_outter = now;
         float sampleFreqLocal = 1.0f / dt_outer;
-        readNRFData();
+        readUDPData();
 
         MadgwickAHRSupdate(
             sampleFreqLocal,
@@ -221,12 +224,10 @@ void fc_task() {
             //tab_magne[0][0], tab_magne[1][0], tab_magne[2][0]
             0, 0, 0
         );
-        //Serial.printf("%f\n", tab_gyro[0][0]);
         q_drone.w = q0; q_drone.x = q1; q_drone.y = q2; q_drone.z = q3;
       
         Euler att = quat_to_euler(q_drone); // Obtiens l'attitude en Euler
         const float MAX_ANGLE_RAD = 45.0f * M_PI / 180.0f;
-        Serial.printf("roll = %f, pitch = %f\n", att.roll*180./M_PI, att.pitch*180./M_PI);
         if (now > TIME_BEFORE_MOTOR_ACTIVATION * 0.8 && (fabs(att.roll) > MAX_ANGLE_RAD || fabs(att.pitch) > MAX_ANGLE_RAD)){
           killswitch_enable = true;
         }
@@ -243,22 +244,20 @@ void fc_task() {
     bool motor_zero = false;
     if(now < TIME_BEFORE_MOTOR_ACTIVATION * 0.9 ){
       motor_zero = true;
-      //motors_zeroes(); // Garder les moteurs en "activité"
-      //return; // On n'accède à l'armement que à la fin de la calibration madwick 
     }
     digitalWrite(GP_LED, HIGH);
-    static bool is_arm_mode_enable = false;
     // Vérification de l'armement du drone. Une fois que le drone est armé, ce n'est plus vérfié
     if( !is_arm_mode_enable ){ 
       is_arm_mode_enable = arm_mode_enable();
-      Serial.printf("%d, %d\n", joyThrottle, radio_delta_time);
+      if (debug_counter2 >= 200) {
+        debug_counter2 = 0;
+        Serial.printf("%d, %d\n", joyThrottle, udp_delta_time);
+      }
       if (is_arm_mode_enable){ //La LED prévient que le drone a été armé
         digitalWrite(ARM_LED, HIGH);
         //Ce serait mieux d'armer les moteurs ici, cependant, => Problématique en communication unidirectionnelle si un moteur failli ( et si on laisse une séquence de démarrage tout ça, après on a le problème de l'algo de Madwick qui se perd)
       }
       motor_zero = true;
-      //motors_zeroes(); // Garder les moteurs en "activité"
-      //return; // Le drone n'accède pas à la suite s'il n'est pas armé !!
     }
     
     failsafe_mode_activation();
@@ -305,10 +304,10 @@ void fc_task() {
     }
 
     debug_counter++;
-    if (debug_counter >= 100) {
+    if (debug_counter >= 200) {
         debug_counter = 0;
         //Afficher également les commandes Moteur1,2,3,4////////////////////////////////////////////////////
-        //Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
+        Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
         
     }
 }
@@ -330,7 +329,7 @@ void setup() {
     motorBR.begin();
     motor_initial_sequence();
     delay(50); //JTAG Delay test
-    setupNRF();
+    setupUDP();
 }
 
 
