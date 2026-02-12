@@ -297,8 +297,8 @@ void fc_task() {
     if(!motor_zero){
       motorFL.sendThrottle(MOT_FL);
       motorFR.sendThrottle(MOT_FR);
-      motorBL.sendThrottle(MOT_BR);
-      motorBR.sendThrottle(MOT_BL);
+      motorBL.sendThrottle(MOT_BL);
+      motorBR.sendThrottle(MOT_BR);
     }else{
       motors_zeroes();
     }
