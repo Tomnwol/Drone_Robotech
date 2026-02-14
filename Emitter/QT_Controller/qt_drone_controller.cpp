@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
     QLabel *kpLabel = new QLabel("Kp:");
     QDoubleSpinBox *kpSpin = new QDoubleSpinBox();
     kpSpin->setRange(1.0, 100.0);    // plage de valeurs
-    kpSpin->setSingleStep(0.05);      // incrément à chaque flèche
+    kpSpin->setSingleStep(0.5);      // incrément à chaque flèche
     kpSpin->setValue(my_config.Kp);           // valeur par défaut
     kpSpin->setDecimals(2);          // nombre de décimales affichées
     payload.KP = my_config.Kp * PID_MULTIPLICATOR;
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
     QLabel *kiLabel = new QLabel("Ki:");
     QDoubleSpinBox *kiSpin = new QDoubleSpinBox();
     kiSpin->setRange(0.0, 100.0);    // plage de valeurs
-    kiSpin->setSingleStep(0.05);      // incrément à chaque flèche
+    kiSpin->setSingleStep(0.5);      // incrément à chaque flèche
     kiSpin->setValue(my_config.Ki);           // valeur par défaut
     kiSpin->setDecimals(2);          // nombre de décimales affichées
     payload.KI = my_config.Ki * PID_MULTIPLICATOR;
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
     QLabel *kdLabel = new QLabel("Kd:");
     QDoubleSpinBox *kdSpin = new QDoubleSpinBox();
     kdSpin->setRange(0.0, 150.0);    // plage de valeurs
-    kdSpin->setSingleStep(0.05);      // incrément à chaque flèche
+    kdSpin->setSingleStep(0.5);      // incrément à chaque flèche
     kdSpin->setValue(my_config.Kd);           // valeur par défaut
     kdSpin->setDecimals(2);          // nombre de décimales affichées
     payload.KD = my_config.Kd * PID_MULTIPLICATOR;
