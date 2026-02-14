@@ -53,14 +53,14 @@ int main(int argc, char *argv[])
     QSlider *OM_FL_Slider = new QSlider(Qt::Horizontal);
     //OM_FL_Slider->setInvertedAppearance(true);
     OM_FL_Slider->setRange(0, OFFSET_MOTOR_MAX);
-    OM_FL_Slider->setValue(0);
+    OM_FL_Slider->setValue(my_config.offsetMotorFL);
     payload.offsetMotorFL = 0;
     OM_FL_Label->setText("OM_FL Value : " + QString::number(OM_FL_Slider->value()));
 
     QLabel *OM_BL_Label = new QLabel("");
     QSlider *OM_BL_Slider = new QSlider(Qt::Horizontal);
     OM_BL_Slider->setRange(0, OFFSET_MOTOR_MAX);
-    OM_BL_Slider->setValue(0);
+    OM_BL_Slider->setValue(my_config.offsetMotorBL);
     payload.offsetMotorBL = 0;
     OM_BL_Label->setText("OM_BL Value : " + QString::number(OM_BL_Slider->value()));
 
@@ -68,14 +68,14 @@ int main(int argc, char *argv[])
     QLabel *OM_FR_Label = new QLabel("");
     QSlider *OM_FR_Slider = new QSlider(Qt::Horizontal);
     OM_FR_Slider->setRange(0, OFFSET_MOTOR_MAX);
-    OM_FR_Slider->setValue(0);
+    OM_FR_Slider->setValue(my_config.offsetMotorFR);
     payload.offsetMotorFR = 0;
     OM_FR_Label->setText("OM_FR Value : " + QString::number(OM_FR_Slider->value()));
 
     QLabel *OM_BR_Label = new QLabel("");
     QSlider *OM_BR_Slider = new QSlider(Qt::Horizontal);
     OM_BR_Slider->setRange(0, OFFSET_MOTOR_MAX);
-    OM_BR_Slider->setValue(0);
+    OM_BR_Slider->setValue(my_config.offsetMotorBR);
     payload.offsetMotorBR = 0;
     OM_BR_Label->setText("OM_BR Value : " + QString::number(OM_BR_Slider->value()));
 
@@ -282,23 +282,27 @@ int main(int argc, char *argv[])
     );
 
     /*Update OFFSETS*/
-    QObject::connect(OM_FL_Slider, &QSlider::valueChanged, [OM_FL_Label](int value){
+    QObject::connect(OM_FL_Slider, &QSlider::valueChanged, [OM_FL_Label, &my_config](int value){
         OM_FL_Label->setText("OM_FL Value : " + QString::number(value));
+        my_config.offsetMotorFL = value;
         payload.offsetMotorFL = value;  //Update value for UART
     });
 
-    QObject::connect(OM_BL_Slider, &QSlider::valueChanged, [OM_BL_Label](int value){
+    QObject::connect(OM_BL_Slider, &QSlider::valueChanged, [OM_BL_Label, &my_config](int value){
         OM_BL_Label->setText("OM_BL Value : " + QString::number(value));
+        my_config.offsetMotorBL = value;
         payload.offsetMotorBL = value;  //Update value for UART
     });
 
-    QObject::connect(OM_FR_Slider, &QSlider::valueChanged, [OM_FR_Label](int value){
+    QObject::connect(OM_FR_Slider, &QSlider::valueChanged, [OM_FR_Label, &my_config](int value){
         OM_FR_Label->setText("OM_FR Value : " + QString::number(value));
+        my_config.offsetMotorFR = value;
         payload.offsetMotorFR = value;  //Update value for UART
     });
 
-    QObject::connect(OM_BR_Slider, &QSlider::valueChanged, [OM_BR_Label](int value){
+    QObject::connect(OM_BR_Slider, &QSlider::valueChanged, [OM_BR_Label, &my_config](int value){
         OM_BR_Label->setText("OM_BR Value : " + QString::number(value));
+        my_config.offsetMotorBR = value;
         payload.offsetMotorBR = value;  //Update value for UART
     });
 

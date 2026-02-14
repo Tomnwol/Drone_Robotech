@@ -5,6 +5,10 @@ struct Config {
     float Kp;
     float Ki;
     float Kd;
+    uint8_t offsetMotorFL;
+    uint8_t offsetMotorFR;
+    uint8_t offsetMotorBL;
+    uint8_t offsetMotorBR;
 };
 
 Config loadConfig(const QString &filename);
