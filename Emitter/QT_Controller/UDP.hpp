@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <QSerialPortInfo>
 #include <iostream>
-
+#define INITIAL_VALUES_PATH "initialValues.ini"
 // Adresse IP et port de l'ESP32
 const QString ESP32_IP = "192.168.4.1";  // IP ESP32 en mode AP
 const quint16 ESP32_PORT = 4210;
@@ -28,7 +28,7 @@ typedef struct pl{
     uint8_t offsetMotorBL = 0;
     uint8_t offsetMotorBR = 0;
 }Payload;
-
+// QString initialValuesPath = "initialValues.ini";
 extern Payload payload;
 void configure_UDP();
 

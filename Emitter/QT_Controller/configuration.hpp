@@ -11,6 +11,7 @@ struct Config {
     uint8_t offsetMotorBR;
 };
 
+extern Config my_config;
 Config loadConfig(const QString &filename);
-void saveConfig(const QString &filename, const Config &my_config);
+void saveConfig(const QString &filename);
 #endif

@@ -18,6 +18,7 @@
 
 #include "UDP.hpp"
 #include "configuration.hpp"
+#include "qtBoxConfiguration.hpp"
 #define OFFSET_MOTOR_MAX 100
 
 #define DSHOT_MIN 48
@@ -45,8 +46,7 @@ int main(int argc, char *argv[])
     QSerialPort* serial = new QSerialPort(&window);
     window.setWindowTitle("Drone Controller Interface");
     QVBoxLayout layout;
-    QString initialValuesName = "initialValues.ini";
-    Config my_config = loadConfig(initialValuesName);
+    my_config = loadConfig(INITIAL_VALUES_PATH);
 
     /****3.Left offset****/
     QLabel *OM_FL_Label = new QLabel("");
@@ -139,61 +139,11 @@ int main(int argc, char *argv[])
 
     offsetsMotorsGroupBox->setLayout(offsetsMotorsHbox);
 
-
-    /***2.Configuration->PID SpinBox***/
-    QGroupBox *PID_GroupBox = new QGroupBox("PID Values");
-    QVBoxLayout *vbox_PID = new QVBoxLayout;
-    QLabel *kpLabel = new QLabel("Kp:");
-    QDoubleSpinBox *kpSpin = new QDoubleSpinBox();
-    kpSpin->setRange(1.0, 100.0);    // plage de valeurs
-    kpSpin->setSingleStep(0.5);      // incrément à chaque flèche
-    kpSpin->setValue(my_config.Kp);           // valeur par défaut
-    kpSpin->setDecimals(2);          // nombre de décimales affichées
-    payload.KP = my_config.Kp * PID_MULTIPLICATOR;
-
-    QLabel *kiLabel = new QLabel("Ki:");
-    QDoubleSpinBox *kiSpin = new QDoubleSpinBox();
-    kiSpin->setRange(0.0, 100.0);    // plage de valeurs
-    kiSpin->setSingleStep(0.5);      // incrément à chaque flèche
-    kiSpin->setValue(my_config.Ki);           // valeur par défaut
-    kiSpin->setDecimals(2);          // nombre de décimales affichées
-    payload.KI = my_config.Ki * PID_MULTIPLICATOR;
-
-    QLabel *kdLabel = new QLabel("Kd:");
-    QDoubleSpinBox *kdSpin = new QDoubleSpinBox();
-    kdSpin->setRange(0.0, 150.0);    // plage de valeurs
-    kdSpin->setSingleStep(0.5);      // incrément à chaque flèche
-    kdSpin->setValue(my_config.Kd);           // valeur par défaut
-    kdSpin->setDecimals(2);          // nombre de décimales affichées
-    payload.KD = my_config.Kd * PID_MULTIPLICATOR;
-
-    vbox_PID->addWidget(kpLabel);
-    vbox_PID->addWidget(kpSpin);
-    vbox_PID->addWidget(kiLabel);
-    vbox_PID->addWidget(kiSpin);
-    vbox_PID->addWidget(kdLabel);
-    vbox_PID->addWidget(kdSpin);
-    PID_GroupBox->setLayout(vbox_PID);
-
-    /***2.Configuration->SaveParameters***/
-    QGroupBox *saveGroupBox = new QGroupBox("Save Config");
-    QVBoxLayout *saveVBox = new QVBoxLayout;
-    QPushButton *save_button = new QPushButton();
-    save_button->setText("SAVE");
-    saveVBox->addWidget(save_button);
-    saveGroupBox->setLayout(saveVBox);
     /**1.Start**/
     QGroupBox *startGroupBox = new QGroupBox("Start");
     QVBoxLayout *startVbox = new QVBoxLayout;
     startVbox->addWidget(communicationGroupBox);
     startGroupBox->setLayout(startVbox);
-
-    /**1.Configuration**/
-    QGroupBox *configurationGroupBox = new QGroupBox("Configuration");
-    QVBoxLayout *configurationVbox = new QVBoxLayout;
-    configurationVbox->addWidget(PID_GroupBox);
-    configurationVbox->addWidget(saveGroupBox);
-    configurationGroupBox->setLayout(configurationVbox);
 
     /**1.Controller**/
     QGroupBox *controllerGroupBox = new QGroupBox("Controller");
@@ -203,6 +153,8 @@ int main(int argc, char *argv[])
     controllerVbox->addWidget(offsetsMotorsGroupBox);
     controllerVbox->addWidget(securityGroupBox);
     controllerGroupBox->setLayout(controllerVbox);
+
+    initConfigurationBox(&my_config);
 
     /* 0.Main Box */
     QGroupBox *mainGroupBox = new QGroupBox("");
@@ -247,69 +199,41 @@ int main(int argc, char *argv[])
         throttleLabel->setText("Throttle Value : " + QString::number(value));
         payload.throttle = value;  //Update value for UART
     });
-
-    QObject::connect(UDPCheck, &QCheckBox::toggled, [&, kpSpin, kiSpin, kdSpin, PID_GroupBox, controllerGroupBox,UDPCheck, serial](bool checked){ // Active la manette et lance la communcation série
+//kpSpin, kiSpin, kdSpin, PID_GroupBox,
+    QObject::connect(UDPCheck, &QCheckBox::toggled, [&, controllerGroupBox,UDPCheck, serial](bool checked){ // Active la manette et lance la communcation série
         checked = checked; // no effect, avoid warning
         controllerGroupBox->setEnabled(true);
         KS_enable = true;
-        kpSpin->setFocusPolicy(Qt::NoFocus);
-        kiSpin->setFocusPolicy(Qt::NoFocus);
-        kdSpin->setFocusPolicy(Qt::NoFocus);
+        noFocusPID();
         UDPCheck->setEnabled(false);
         configure_UDP();
     });
 
-
-    QObject::connect(kpSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-                     [&my_config](double value){
-                         my_config.Kp = value;
-                         payload.KP = (uint16_t)(value * PID_MULTIPLICATOR);
-                     }
-    );
-
-    QObject::connect(kiSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-                     [&my_config](double value){
-                         my_config.Ki = value;
-                         payload.KI = (uint16_t)(value * PID_MULTIPLICATOR);
-                     }
-    );
-
-    QObject::connect(kdSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-                     [&my_config](double value){
-                         my_config.Kd = value;
-                         payload.KD = (uint16_t)(value * PID_MULTIPLICATOR);
-                     }
-    );
-
     /*Update OFFSETS*/
-    QObject::connect(OM_FL_Slider, &QSlider::valueChanged, [OM_FL_Label, &my_config](int value){
+    QObject::connect(OM_FL_Slider, &QSlider::valueChanged, [OM_FL_Label](int value){
         OM_FL_Label->setText("OM_FL Value : " + QString::number(value));
         my_config.offsetMotorFL = value;
         payload.offsetMotorFL = value;  //Update value for UART
     });
 
-    QObject::connect(OM_BL_Slider, &QSlider::valueChanged, [OM_BL_Label, &my_config](int value){
+    QObject::connect(OM_BL_Slider, &QSlider::valueChanged, [OM_BL_Label](int value){
         OM_BL_Label->setText("OM_BL Value : " + QString::number(value));
         my_config.offsetMotorBL = value;
         payload.offsetMotorBL = value;  //Update value for UART
     });
 
-    QObject::connect(OM_FR_Slider, &QSlider::valueChanged, [OM_FR_Label, &my_config](int value){
+    QObject::connect(OM_FR_Slider, &QSlider::valueChanged, [OM_FR_Label](int value){
         OM_FR_Label->setText("OM_FR Value : " + QString::number(value));
         my_config.offsetMotorFR = value;
         payload.offsetMotorFR = value;  //Update value for UART
     });
 
-    QObject::connect(OM_BR_Slider, &QSlider::valueChanged, [OM_BR_Label, &my_config](int value){
+    QObject::connect(OM_BR_Slider, &QSlider::valueChanged, [OM_BR_Label](int value){
         OM_BR_Label->setText("OM_BR Value : " + QString::number(value));
         my_config.offsetMotorBR = value;
         payload.offsetMotorBR = value;  //Update value for UART
     });
 
-    QObject::connect(save_button, &QPushButton::clicked, [&initialValuesName, &my_config](){
-        saveConfig(initialValuesName, my_config);
-        std::cout << "Configuration saved !\n";
-    });
 
     return app.exec();
 }

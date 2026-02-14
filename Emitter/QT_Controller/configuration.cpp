@@ -1,7 +1,9 @@
 #include "configuration.hpp"
 
+Config my_config;
+
 Config loadConfig(const QString &filename) {
-    Config my_config;
+    //Config my_config;
     QSettings settings(filename, QSettings::IniFormat);
 
     settings.beginGroup("PID");
@@ -19,7 +21,7 @@ Config loadConfig(const QString &filename) {
     return my_config;
 }
 
-void saveConfig(const QString &filename, const Config &my_config) {
+void saveConfig(const QString &filename) {
     QSettings settings(filename, QSettings::IniFormat);
 
     settings.beginGroup("PID");
