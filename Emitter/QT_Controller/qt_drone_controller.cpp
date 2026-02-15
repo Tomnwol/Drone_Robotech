@@ -21,7 +21,7 @@
 #include "qtStartBox.hpp"
 #include "qtBoxConfiguration.hpp"
 #include "qtControllerBox.hpp"
-
+#include "qtDroneBox.hpp"
 class NoKeyboardSpinBox : public QDoubleSpinBox {
 public:
     using QDoubleSpinBox::QDoubleSpinBox;
@@ -45,13 +45,14 @@ int main(int argc, char *argv[])
     initStartBox(serial);
     initConfigurationBox(&my_config);
     initControllerBox(&window);
-
+    initDroneBox();
     /* 0.Main Box */
     QGroupBox *mainGroupBox = new QGroupBox("");
     QHBoxLayout *mainHBox = new QHBoxLayout;
     mainHBox->addWidget(startGroupBox);
     mainHBox->addWidget(configurationGroupBox);
     mainHBox->addWidget(controllerGroupBox);
+    mainHBox->addWidget(droneGroupBox);
     mainGroupBox->setLayout(mainHBox);
 
     /* Display */
