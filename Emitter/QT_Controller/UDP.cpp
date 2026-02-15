@@ -3,6 +3,7 @@
 QUdpSocket* udpSocket = nullptr;
 QTimer* timer = nullptr;
 
+Payload payload;
 void configure_UDP(){
     udpSocket = new QUdpSocket();
     timer = new QTimer();
