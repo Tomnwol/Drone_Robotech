@@ -1,28 +1,96 @@
 #include <QGroupBox>
 #include <QLabel>
-#include <QSlider>
+#include <QProgressBar>
 #include <QString>
 #include <QVBoxLayout>
 #include "qtDroneBox.hpp"
 
 QGroupBox *droneGroupBox = nullptr;
+#define HEIGHT_BATTERY_CELL 5 //px
+
+#define BATTERY_NO_DATA "#333333"
+#define EMPTY_CELL_COLOR "#bbbbbb"
+
+#define BATTERY_FULL_COLOR "#54D651"
+#define BATTERY_OK_COLOR "#82D651"
+#define BATTERY_HALF_COLOR "#D2D651"
+#define BATTERY_LOW_COLOR "#EE8311"
+#define BATTERY_STOP_COLOR "#C72610"
+
+#define BATTERY_CELL_COUNT 5
+
+QWidget* droneBatteryCells[BATTERY_CELL_COUNT];
+QProgressBar *droneBatteryProgressBar;
+
+QString getColorByValue(float value){
+    QString color;
+
+    if(value > 80){
+    	color = BATTERY_FULL_COLOR;
+    }else if(value > 60){
+    	color = BATTERY_OK_COLOR;
+    }else if(value > 40){
+    	color = BATTERY_HALF_COLOR;
+    }else if(value > 20){
+    	color = BATTERY_LOW_COLOR;
+    }else if(value >= 0){
+    	color = BATTERY_STOP_COLOR;
+    }else{
+    	color = BATTERY_NO_DATA;
+    }
+    return color;
+}
+
+void updateColorCells(int value) {
+    QString current_color = getColorByValue(value);
+    int activeCells = (value * BATTERY_CELL_COUNT) / 100 + 1;
+
+    for(int i = 0; i < BATTERY_CELL_COUNT; i++) {
+        if (value < 0){
+            droneBatteryCells[i]->setStyleSheet("background-color: " + QString(BATTERY_NO_DATA) + ";");
+            continue;
+        }
+        // Remplissage depuis le bas
+        if(i >= BATTERY_CELL_COUNT - activeCells) {
+            droneBatteryCells[i]->setStyleSheet("background-color: " + current_color + ";");
+        } else {
+            droneBatteryCells[i]->setStyleSheet("background-color: " + QString(EMPTY_CELL_COLOR) + ";");
+        }
+    }
+}
+
+void updateValueLabel(QLabel *batteryLabel, int value) {
+    if (value >= 0){
+        batteryLabel->setText("Battery % : " + QString::number(value));
+    }else{
+        batteryLabel->setText("--NO DATA--");
+    }
+
+}
 
 void initDroneBox(){
+
     droneGroupBox = new QGroupBox("Drone");
-    QLabel *droneBatteryLabel = new QLabel("Battery");
-    QSlider *droneBatterySlider = new QSlider(Qt::Vertical);
-    droneBatterySlider->setRange(0, 100);
-    droneBatterySlider->setValue(70);
-    droneBatterySlider->setEnabled(false);
-    droneBatterySlider->setStyleSheet(
-        "QSlider::groove:vertical { width: 50px; background: rgb(70,70,70); border-radius: 5px; }"
-        "QSlider::add-page:vertical { background: rgb(0,200,0); border-radius: 5px; }"
-        "QSlider::sub-page:vertical { background: rgb(70,70,70); border-radius: 5px; }"   // <-- vert
-        "QSlider::handle:vertical { width: 50px; height: 20px; background: solid black; border: 3px solid black; margin: 0 -5px; border-radius: 5px; }"
-    );
-    droneBatteryLabel->setText("Drone Battery % : " + QString::number(droneBatterySlider->value()));
+    QLabel *droneBatteryLabel = new QLabel("");
+
+    int batteryValue = -1;
+    //droneBatteryLabel->setText("Battery % : " + QString::number(batteryValue));
+
     QVBoxLayout *droneVbox = new QVBoxLayout;
     droneVbox->addWidget(droneBatteryLabel);
-    droneVbox->addWidget(droneBatterySlider);
+
+    // Création des cellules
+    for(int i = 0; i < BATTERY_CELL_COUNT; i++) {
+
+        droneBatteryCells[i] = new QWidget();
+        droneBatteryCells[i]->setMinimumHeight(HEIGHT_BATTERY_CELL);
+        //droneBatteryCells[i]->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
+        droneVbox->addWidget(droneBatteryCells[i]);
+    }
+
+    updateColorCells( batteryValue );
+    updateValueLabel( droneBatteryLabel, batteryValue );
     droneGroupBox->setLayout(droneVbox);
 }
+
