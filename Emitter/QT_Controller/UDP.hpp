@@ -30,6 +30,7 @@ typedef struct pl{
 }Payload;
 // QString initialValuesPath = "initialValues.ini";
 extern Payload payload;
+extern uint8_t droneBattery;
 void configure_UDP();
 
 

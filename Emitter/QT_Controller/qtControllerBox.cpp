@@ -137,13 +137,17 @@ void initControllerBox(QWidget* window){
     });
 
     QShortcut *FS_Shortcut = new QShortcut(QKeySequence(Qt::Key_F), window);
-    QObject::connect(FS_Shortcut, &QShortcut::activated, [&]() { //Active/Désactive la limitation moteur (côté drone)
+    QObject::connect(FS_Shortcut, &QShortcut::activated, FS_Check, [FS_Check]() { //Active/Désactive la limitation moteur (côté drone)
+        QSignalBlocker blocker(FS_Check);
         FS_Check->setChecked(not FS_Check->isChecked());
         payload.failSafeSwitch = FS_Check->isChecked(); //Update value for UART
+
     });
-    QObject::connect(FS_Check, &QCheckBox::toggled, [&](bool checked) {
+    QObject::connect(FS_Check, &QCheckBox::toggled, FS_Check, [FS_Check](bool checked) {
         // Cette lambda est appelée à chaque clic sur la checkbox
+        QSignalBlocker blocker(FS_Check);
         payload.failSafeSwitch = checked;
+
     });
 
 

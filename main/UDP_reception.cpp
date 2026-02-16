@@ -28,6 +28,11 @@ uint8_t offsetMotorFR = 0;
 uint8_t offsetMotorBL = 0;
 uint8_t offsetMotorBR = 0;
 
+//Emmit data from ESP to PC
+BATTERY_PIN = GPIO_NUM_36;
+IPAddress pcIP;
+uint16_t pcPort = 0;
+
 void setupUDP() {
     WiFi.softAP(ssid, password);
     Serial.print("IP ESP32 : ");
@@ -38,6 +43,45 @@ void setupUDP() {
     udp_last_time = millis();
 }
 
+uint16_t readBatteryMV() {
+    int raw = analogRead(BATTERY_PIN);
+
+    // Converti ADC (0-4095) en mV (supposons 3.3V référence)
+    float voltage = (raw / 4095.0) * 3300; // en mV
+    return (uint16_t)voltage;
+}
+
+uint8_t batteryPercentage() {
+    uint16_t mv = readBatteryMV();
+
+    // Contrainte entre min/max
+    if (mv >= BATTERY_MAX) return 100;
+    if (mv <= BATTERY_MIN) return 0;
+
+    // Map 1910–2320 mV → 0–100 %
+    float perc = ((float)(mv - BATTERY_MIN)) / (BATTERY_MAX - BATTERY_MIN) * 100.0;
+    return (uint8_t)perc;
+}
+
+void handleSendTelemetry(){
+    static unsigned long lastSend = 0;
+    if (millis() - lastSend > 500) {
+        lastSend = millis();
+        uint8_t value = batteryPercentage(); // Lis la valeur de la batterie ( entre 2,32V et 1,91)
+        sendTelemetry(value);
+    }
+}
+
+void sendTelemetry(uint8_t batteryVoltage) {
+    if (pcPort != 0){
+        udp.beginPacket(pcIP, pcPort);
+        udp.write(batteryVoltage, 1);
+        udp.endPacket();
+    }
+}
+
+
+
 
 void readUDPData() {
     udp_delta_time = millis() - udp_last_time;
@@ -45,6 +89,8 @@ void readUDPData() {
     if (packetSize == 22) { // on attend 22 octets
         udp_last_time = millis();
         udp.read(payload, 22);
+        pcIP = udp.remoteIP();
+        pcPort = udp.remotePort();
 
         joyThrottle = payload[0] + (payload[1]<<8);
         joyYaw      = payload[2] + (payload[3]<<8);

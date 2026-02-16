@@ -5,4 +5,5 @@
 extern QGroupBox *droneGroupBox;
 
 void initDroneBox();
+void updateDroneBox();
 #endif

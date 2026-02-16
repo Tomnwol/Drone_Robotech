@@ -193,6 +193,8 @@ void fc_task() {
     static Vector3f omega_set = {0};
     static Vector3f magne_vect = {0, 0, 0};
 
+    handleSendTelemetry();
+
     unsigned long now = micros(); // microsecondes
     float dt_inner = (now - lastTime_inner) / 1000000.0f; // s [Si bug -> Vérifier que dt_inner ne vaut jamais 0]
     lastTime_inner = now;
@@ -200,13 +202,7 @@ void fc_task() {
     // Lecture capteurs
     Vector3f accel_vect = read_accel();
     Vector3f gyro_vect  = read_gyro();
-
     magne_compteur++;
-    /*if (magne_compteur >= 10) {
-        magne_compteur = 0;
-        magne_vect = read_magne();
-    }*/
-
     fill_queues(accel_vect, gyro_vect, magne_vect);
     passes_bas(dt_inner);
 
@@ -318,6 +314,7 @@ void setup() {
     Serial.begin(115200);
     pinMode(ARM_LED, OUTPUT);
     pinMode(GP_LED, OUTPUT);
+    pinMode(BATTERY_PIN, INPUT);
     digitalWrite(GP_LED, LOW);
     digitalWrite(ARM_LED, LOW);
     i2c_master_init(I2C_MASTER_0_PORT, I2C_MASTER_0_SDA_IO, I2C_MASTER_0_SCL_IO, I2C_MASTER_0_FREQ_HZ);

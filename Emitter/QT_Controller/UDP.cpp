@@ -2,10 +2,12 @@
 
 QUdpSocket* udpSocket = nullptr;
 QTimer* timer = nullptr;
-
+uint8_t droneBattery = 255;
 Payload payload;
 void configure_UDP(){
+
     udpSocket = new QUdpSocket();
+    udpSocket->bind(QHostAddress::AnyIPv4, 4211);
     timer = new QTimer();
     timer->setInterval(20); // 20 ms → 50 Hz
 
@@ -45,5 +47,28 @@ void configure_UDP(){
     });
     timer->start();
     std::cout << "La communication UDP commence !\n" ;
+
+
+    // Réception
+    QObject::connect(udpSocket, &QUdpSocket::readyRead, [](){
+
+        while (udpSocket->hasPendingDatagrams()) {
+
+            QByteArray datagram;
+            datagram.resize(udpSocket->pendingDatagramSize());
+
+            QHostAddress sender;
+            quint16 senderPort;
+
+            udpSocket->readDatagram(datagram.data(),
+                                    datagram.size(),
+                                    &sender,
+                                    &senderPort);
+
+            if (datagram.size() == 1) {
+                droneBattery = datagram[0];
+            }
+        }
+    });
 }
 

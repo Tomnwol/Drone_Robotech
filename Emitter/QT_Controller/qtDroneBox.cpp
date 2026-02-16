@@ -3,7 +3,9 @@
 #include <QProgressBar>
 #include <QString>
 #include <QVBoxLayout>
+#include <QTimer>
 #include "qtDroneBox.hpp"
+#include "UDP.hpp"
 
 QGroupBox *droneGroupBox = nullptr;
 #define HEIGHT_BATTERY_CELL 5 //px
@@ -21,11 +23,13 @@ QGroupBox *droneGroupBox = nullptr;
 
 QWidget* droneBatteryCells[BATTERY_CELL_COUNT];
 QProgressBar *droneBatteryProgressBar;
+QLabel *droneBatteryLabel;
+QTimer* updateTimer = nullptr;
 
 QString getColorByValue(float value){
     QString color;
 
-    if(value > 80){
+    if(value <= 100 && value > 80){
     	color = BATTERY_FULL_COLOR;
     }else if(value > 60){
     	color = BATTERY_OK_COLOR;
@@ -41,12 +45,12 @@ QString getColorByValue(float value){
     return color;
 }
 
-void updateColorCells(int value) {
+void updateColorCells(uint8_t value) {
     QString current_color = getColorByValue(value);
     int activeCells = (value * BATTERY_CELL_COUNT) / 100 + 1;
 
     for(int i = 0; i < BATTERY_CELL_COUNT; i++) {
-        if (value < 0){
+        if (value > 100){
             droneBatteryCells[i]->setStyleSheet("background-color: " + QString(BATTERY_NO_DATA) + ";");
             continue;
         }
@@ -59,8 +63,9 @@ void updateColorCells(int value) {
     }
 }
 
-void updateValueLabel(QLabel *batteryLabel, int value) {
-    if (value >= 0){
+void updateValueLabel(QLabel *batteryLabel, uint8_t value) {
+
+    if (value <= 100){
         batteryLabel->setText("Battery % : " + QString::number(value));
     }else{
         batteryLabel->setText("--NO DATA--");
@@ -68,12 +73,16 @@ void updateValueLabel(QLabel *batteryLabel, int value) {
 
 }
 
+void updateDroneBox(){
+    updateColorCells( droneBattery );
+    updateValueLabel( droneBatteryLabel, droneBattery );
+}
+
 void initDroneBox(){
 
     droneGroupBox = new QGroupBox("Drone");
-    QLabel *droneBatteryLabel = new QLabel("");
+    droneBatteryLabel = new QLabel("");
 
-    int batteryValue = -1;
     //droneBatteryLabel->setText("Battery % : " + QString::number(batteryValue));
 
     QVBoxLayout *droneVbox = new QVBoxLayout;
@@ -89,8 +98,13 @@ void initDroneBox(){
         droneVbox->addWidget(droneBatteryCells[i]);
     }
 
-    updateColorCells( batteryValue );
-    updateValueLabel( droneBatteryLabel, batteryValue );
+    //updateDroneBox();
+    updateTimer = new QTimer();
+    updateTimer->setInterval(50); // 100 ms → 20 Hz
+    QObject::connect(updateTimer, &QTimer::timeout, []() {
+        updateDroneBox();
+    });
+    updateTimer->start();
     droneGroupBox->setLayout(droneVbox);
 }
 
