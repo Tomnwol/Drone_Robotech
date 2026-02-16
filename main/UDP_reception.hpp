@@ -19,7 +19,7 @@ extern uint8_t offsetMotorBR;
 
 extern unsigned long udp_last_time;
 extern unsigned long udp_delta_time;
-#define BATTERY_PIN 36
+#define BATTERY_PIN 34
 #define BATTERY_MIN 1910 // mV correspondant à 0%
 #define BATTERY_MAX 2320 // mV correspondant à 100%
 
