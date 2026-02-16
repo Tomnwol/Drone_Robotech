@@ -29,7 +29,6 @@ uint8_t offsetMotorBL = 0;
 uint8_t offsetMotorBR = 0;
 
 //Emmit data from ESP to PC
-BATTERY_PIN = GPIO_NUM_36;
 IPAddress pcIP;
 uint16_t pcPort = 0;
 
@@ -63,22 +62,29 @@ uint8_t batteryPercentage() {
     return (uint8_t)perc;
 }
 
+void sendTelemetry(uint8_t batteryVoltage) {
+    if (pcPort != 0) {
+        udp.beginPacket(pcIP, pcPort);
+        uint8_t buf[1];
+        buf[0] = batteryVoltage;
+        udp.write(buf, 1);
+        udp.endPacket();
+    }
+}
+
+
 void handleSendTelemetry(){
     static unsigned long lastSend = 0;
     if (millis() - lastSend > 500) {
         lastSend = millis();
         uint8_t value = batteryPercentage(); // Lis la valeur de la batterie ( entre 2,32V et 1,91)
+        Serial.print("Batterie Percent :");
+        Serial.println(value);
         sendTelemetry(value);
     }
 }
 
-void sendTelemetry(uint8_t batteryVoltage) {
-    if (pcPort != 0){
-        udp.beginPacket(pcIP, pcPort);
-        udp.write(batteryVoltage, 1);
-        udp.endPacket();
-    }
-}
+
 
 
 
