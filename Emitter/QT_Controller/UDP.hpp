@@ -14,9 +14,9 @@ const quint16 ESP32_PORT = 4210;
 #define PID_MULTIPLICATOR 100 // On mutiplie KP, KI et KD par 100 pour garder 2 décimales suplémentaires, il faudra /100 du côté drone par contre
 typedef struct pl{
     uint16_t throttle = 0;
-    uint16_t yaw = 0;
-    uint16_t roll = 0;
-    uint16_t pitch = 0;
+    int16_t yaw = 0;
+    int16_t roll = 0;
+    int16_t pitch = 0;
     uint16_t GP_Pot = 0;
     uint8_t failSafeSwitch = 0;
     uint8_t killSwitch = 0;

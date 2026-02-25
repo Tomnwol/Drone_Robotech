@@ -192,8 +192,13 @@ void fc_task() {
     static Quaternion q_drone = {1, 0, 0, 0};
     static Vector3f omega_set = {0};
     static Vector3f magne_vect = {0, 0, 0};
+    static Euler att_telemetry = {0,0,0};
+    static uint16_t MOT_FL_telemetry = 48;
+    static uint16_t MOT_FR_telemetry = 48;
+    static uint16_t MOT_BR_telemetry = 48;
+    static uint16_t MOT_BL_telemetry = 48;
 
-    handleSendTelemetry();
+    handleSendTelemetry(att_telemetry, MOT_FL_telemetry, MOT_FR_telemetry, MOT_BR_telemetry, MOT_BL_telemetry);
 
     unsigned long now = micros(); // microsecondes
     float dt_inner = (now - lastTime_inner) / 1000000.0f; // s [Si bug -> Vérifier que dt_inner ne vaut jamais 0]
@@ -223,12 +228,14 @@ void fc_task() {
         q_drone.w = q0; q_drone.x = q1; q_drone.y = q2; q_drone.z = q3;
       
         Euler att = quat_to_euler(q_drone); // Obtiens l'attitude en Euler
-        const float MAX_ANGLE_RAD = 45.0f * M_PI / 180.0f;
-        if (now > TIME_BEFORE_MOTOR_ACTIVATION * 0.8 && (fabs(att.roll) > MAX_ANGLE_RAD || fabs(att.pitch) > MAX_ANGLE_RAD)){
+        att_telemetry = att;
+        const float SECURITY_ANGLE_RAD = 45.0f * M_PI / 180.0f;
+        if (now > TIME_BEFORE_MOTOR_ACTIVATION * 0.8 && (fabs(att.roll) > SECURITY_ANGLE_RAD || fabs(att.pitch) > SECURITY_ANGLE_RAD)){
           killswitch_enable = true;
         }
-        Euler att_desired = {0.0f, 0.0f, 0.0f}; // attitude cible (par ex. à plat)
 
+        Euler att_desired = get_att_desired();
+        //Euler att_desired = {0.0f, 0.0f, 0.0f}; // attitude cible (par ex. à plat)
         omega_set = get_angular_rate_command(att, att_desired);
     }
 
@@ -290,6 +297,11 @@ void fc_task() {
     uint16_t MOT_FR = (uint16_t)float_clamp(prev_mFR, 48.0, motor_max_value);
     uint16_t MOT_BR = (uint16_t)float_clamp(prev_mBR, 48.0, motor_max_value);
     uint16_t MOT_BL = (uint16_t)float_clamp(prev_mBL, 48.0, motor_max_value);
+    MOT_FL_telemetry = MOT_FL;
+    MOT_FR_telemetry = MOT_FR;
+    MOT_BR_telemetry = MOT_BR;
+    MOT_BL_telemetry = MOT_BL;
+
     if(!motor_zero){
       motorFL.sendThrottle(MOT_FL);
       motorFR.sendThrottle(MOT_FR);

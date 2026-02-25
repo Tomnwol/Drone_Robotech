@@ -65,7 +65,7 @@ void configure_UDP(){
                                     &sender,
                                     &senderPort);
 
-            if (datagram.size() == 1) {
+            if (datagram.size() == 15) { // Rajouter la récupération des autres paquets (pour CSV)
                 droneBattery = datagram[0];
             }
         }

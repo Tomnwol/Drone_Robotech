@@ -16,6 +16,9 @@
 #define DSHOT_MIN 48
 #define DSHOT_MAX 2047
 
+#define ANGLE_MAX 1000  // (yaw/pitch/roll)
+
+
 QGroupBox *controllerGroupBox = nullptr;
 bool KS_enable = false;
 void initControllerBox(QWidget* window){
@@ -67,13 +70,39 @@ void initControllerBox(QWidget* window){
     QGroupBox *motorsGroupBox = new QGroupBox("Motors");
     QVBoxLayout *motorsVbox = new QVBoxLayout;
     QLabel *throttleLabel = new QLabel("");
+    QLabel *yawLabel = new QLabel("");
+    QLabel *rollLabel = new QLabel("");
+    QLabel *pitchLabel = new QLabel("");
     QSlider *throttleSlider = new QSlider(Qt::Horizontal);
+    QSlider *yawSlider = new QSlider(Qt::Horizontal);
+    QSlider *rollSlider = new QSlider(Qt::Horizontal);
+    QSlider *pitchSlider = new QSlider(Qt::Horizontal);
+
     throttleSlider->setRange(DSHOT_MIN, DSHOT_MAX);
     throttleSlider->setValue(DSHOT_MIN);
+    yawSlider->setRange(-ANGLE_MAX, +ANGLE_MAX);
+    yawSlider->setValue(0);
+    rollSlider->setRange(-ANGLE_MAX, +ANGLE_MAX);
+    rollSlider->setValue(0);
+    pitchSlider->setRange(-ANGLE_MAX, +ANGLE_MAX);
+    pitchSlider->setValue(0);
+
+    payload.yaw = 0;
+    payload.roll = 0;
+    payload.pitch = 0;
     payload.throttle = DSHOT_MIN;
     throttleLabel->setText("Throttle Value : " + QString::number(throttleSlider->value()));
+    yawLabel->setText("Yaw Value : " + QString::number(yawSlider->value()));
+    rollLabel->setText("Roll Value : " + QString::number(rollSlider->value()));
+    pitchLabel->setText("Pitch Value : " + QString::number(pitchSlider->value()));
     motorsVbox->addWidget(throttleLabel);
     motorsVbox->addWidget(throttleSlider);
+    motorsVbox->addWidget(yawLabel);
+    motorsVbox->addWidget(yawSlider);
+    motorsVbox->addWidget(rollLabel);
+    motorsVbox->addWidget(rollSlider);
+    motorsVbox->addWidget(pitchLabel);
+    motorsVbox->addWidget(pitchSlider);
     motorsGroupBox->setLayout(motorsVbox);
 
 
@@ -174,5 +203,20 @@ void initControllerBox(QWidget* window){
     QObject::connect(throttleSlider, &QSlider::valueChanged, [throttleLabel](int value){ //Update la valeur de Throttle
         throttleLabel->setText("Throttle Value : " + QString::number(value));
         payload.throttle = value;  //Update value for UART
+    });
+
+    QObject::connect(yawSlider, &QSlider::valueChanged, [yawLabel](int value){ //Update la valeur de Throttle
+        yawLabel->setText("Yaw Value : " + QString::number(value));
+        payload.yaw = value;  //Update value for UART
+    });
+
+    QObject::connect(rollSlider, &QSlider::valueChanged, [rollLabel](int value){ //Update la valeur de Throttle
+        rollLabel->setText("Roll Value : " + QString::number(value));
+        payload.roll = value;  //Update value for UART
+    });
+
+    QObject::connect(pitchSlider, &QSlider::valueChanged, [pitchLabel](int value){ //Update la valeur de Throttle
+        pitchLabel->setText("Pitch Value : " + QString::number(value));
+        payload.pitch = value;  //Update value for UART
     });
 }

@@ -1,11 +1,11 @@
 #ifndef __UDP_RECEPTION_H
 #define __UDP_RECEPTION_H
 #include <Arduino.h>
-
+#include "types.hpp"
 extern uint16_t joyThrottle; //analogRead(A0);
-extern uint16_t joyYaw;
-extern uint16_t joyRoll;
-extern uint16_t joyPitch;
+extern int16_t joyYaw;
+extern int16_t joyRoll;
+extern int16_t joyPitch;
 extern uint16_t GP_Pot;
 extern uint8_t SWFailSafe;
 extern uint8_t SWKillSwitch;
@@ -23,7 +23,7 @@ extern unsigned long udp_delta_time;
 #define BATTERY_MIN 1910 // mV correspondant à 0%
 #define BATTERY_MAX 2320 // mV correspondant à 100%
 
-void handleSendTelemetry();
+void handleSendTelemetry(Euler att_telemetry, uint16_t MOT_FL_telemetry, uint16_t MOT_FR_telemetry, uint16_t MOT_BR_telemetry, uint16_t MOT_BL_telemetry);
 void setupUDP();
 void readUDPData();
 

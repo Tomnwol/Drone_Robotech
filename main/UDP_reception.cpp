@@ -62,25 +62,43 @@ uint8_t batteryPercentage() {
     return (uint8_t)perc;
 }
 
-void sendTelemetry(uint8_t batteryVoltage) {
+void sendTelemetry(uint8_t batteryVoltage, int16_t yaw_telemetry, int16_t roll_telemetry,int16_t pitch_telemetry,uint16_t MOT_FL_telemetry, uint16_t MOT_FR_telemetry, uint16_t MOT_BR_telemetry, uint16_t MOT_BL_telemetry) {
     if (pcPort != 0) {
         udp.beginPacket(pcIP, pcPort);
-        uint8_t buf[1];
+        uint8_t buf[15];
         buf[0] = batteryVoltage;
-        udp.write(buf, 1);
+        buf[1] = yaw_telemetry & 0xFF;
+        buf[2] = (yaw_telemetry >> 8) & 0xFF;
+        buf[3] = roll_telemetry & 0xFF;
+        buf[4] = (roll_telemetry >> 8) & 0xFF;
+        buf[5] = pitch_telemetry & 0xFF;
+        buf[6] = (pitch_telemetry >> 8) & 0xFF;
+        buf[7] = MOT_FL_telemetry & 0xFF;
+        buf[8] = (MOT_FL_telemetry >> 8) & 0xFF;
+        buf[9] = MOT_FR_telemetry & 0xFF;
+        buf[10] = (MOT_FR_telemetry >> 8) & 0xFF;
+        buf[11] = MOT_BR_telemetry & 0xFF;
+        buf[12] = (MOT_BR_telemetry >> 8) & 0xFF;
+        buf[13] = MOT_BL_telemetry & 0xFF;
+        buf[14] = (MOT_BL_telemetry >> 8) & 0xFF;
+
+        udp.write(buf, 15);
         udp.endPacket();
     }
 }
 
 
-void handleSendTelemetry(){
+void handleSendTelemetry(Euler att_telemetry, uint16_t MOT_FL_telemetry, uint16_t MOT_FR_telemetry, uint16_t MOT_BR_telemetry, uint16_t MOT_BL_telemetry){
     static unsigned long lastSend = 0;
-    if (millis() - lastSend > 500) {
+    if (millis() - lastSend > 100) {
         lastSend = millis();
         uint8_t value = batteryPercentage(); // Lis la valeur de la batterie ( entre 2,32V et 1,91)
         Serial.print("Batterie Percent :");
         Serial.println(value);
-        sendTelemetry(value);
+        int16_t yaw_telemetry = (int16_t)(att_telemetry.yaw);
+        int16_t roll_telemetry = (int16_t)(att_telemetry.roll);
+        int16_t pitch_telemetry = (int16_t)(att_telemetry.pitch);
+        sendTelemetry(value, yaw_telemetry, roll_telemetry, pitch_telemetry, MOT_FL_telemetry, MOT_FR_telemetry, MOT_BR_telemetry, MOT_BL_telemetry);
     }
 }
 
@@ -99,9 +117,9 @@ void readUDPData() {
         pcPort = udp.remotePort();
 
         joyThrottle = payload[0] + (payload[1]<<8);
-        joyYaw      = payload[2] + (payload[3]<<8);
-        joyRoll     = payload[4] + (payload[5]<<8);
-        joyPitch    = payload[6] + (payload[7]<<8);
+        joyYaw = (int16_t)((uint16_t)payload[2] | ((uint16_t)payload[3] << 8));
+        joyRoll = (int16_t)((uint16_t)payload[4] | ((uint16_t)payload[5] << 8));
+        joyPitch = (int16_t)((uint16_t)payload[6] | ((uint16_t)payload[7] << 8));
         GP_Pot      = payload[8] + (payload[9]<<8);
         SWFailSafe  = payload[10];
         SWKillSwitch= payload[11];
