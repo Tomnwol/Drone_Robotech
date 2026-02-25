@@ -14,9 +14,9 @@ unsigned long udp_last_time = 0;
 unsigned long udp_delta_time = 0;
 
 uint16_t joyThrottle = 0; //analogRead(A0);
-uint16_t joyYaw = 0;
-uint16_t joyRoll = 0;
-uint16_t joyPitch = 0;
+int16_t joyYaw = 0;
+int16_t joyRoll = 0;
+int16_t joyPitch = 0;
 uint16_t GP_Pot = 0;
 uint8_t SWFailSafe = 0;
 uint8_t SWKillSwitch = 0;

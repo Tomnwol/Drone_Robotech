@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include "types.hpp"
-#include "UPD_reception.hpp"
+
 #define MPU9265_ADDR                0x68
 #define MPU9265_WHO_AM_I_REG        0x75
 #define MPU9265_PWR_MGMT_1_REG      0x6B
