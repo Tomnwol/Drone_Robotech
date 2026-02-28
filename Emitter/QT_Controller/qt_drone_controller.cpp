@@ -1,3 +1,4 @@
+#include <QSurfaceFormat>
 #include <QApplication>
 #include <QWidget>
 #include <QSlider>
@@ -35,6 +36,12 @@ protected:
 int main(int argc, char *argv[])
 {
     /*APPLICATION SETUP*/
+    QSurfaceFormat format;
+    format.setDepthBufferSize(24);
+    format.setStencilBufferSize(8);
+    format.setVersion(4, 3); // OpenGL 4.3 safe
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    QSurfaceFormat::setDefaultFormat(format);
     QApplication app(argc, argv);
     QWidget window;
     QSerialPort* serial = new QSerialPort(&window);

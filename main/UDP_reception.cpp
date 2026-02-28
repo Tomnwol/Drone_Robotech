@@ -95,9 +95,9 @@ void handleSendTelemetry(Euler att_telemetry, uint16_t MOT_FL_telemetry, uint16_
         uint8_t value = batteryPercentage(); // Lis la valeur de la batterie ( entre 2,32V et 1,91)
         Serial.print("Batterie Percent :");
         Serial.println(value);
-        int16_t yaw_telemetry = (int16_t)(att_telemetry.yaw);
-        int16_t roll_telemetry = (int16_t)(att_telemetry.roll);
-        int16_t pitch_telemetry = (int16_t)(att_telemetry.pitch);
+        int16_t yaw_telemetry = (int16_t)(att_telemetry.yaw * 180.0f / M_PI);
+        int16_t roll_telemetry = (int16_t)(att_telemetry.roll * 180.0f / M_PI);
+        int16_t pitch_telemetry = (int16_t)(att_telemetry.pitch * 180.0f / M_PI);
         sendTelemetry(value, yaw_telemetry, roll_telemetry, pitch_telemetry, MOT_FL_telemetry, MOT_FR_telemetry, MOT_BR_telemetry, MOT_BL_telemetry);
     }
 }
