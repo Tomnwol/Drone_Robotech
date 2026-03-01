@@ -165,10 +165,12 @@ void initControllerBox(QWidget* window, Controller* controller){
     timerControllerUpdate->setInterval(20); // 20 ms → 50 Hz
 
     QObject::connect(timerControllerUpdate, &QTimer::timeout, [throttleSlider, yawSlider, rollSlider, pitchSlider, killCheck, FS_Check]() {
+        throttleValue += throttleAxis;
+        throttleValue = clampInt(throttleValue, 48, 2047);
         if (!throttleSlider->isSliderDown()){
-            throttleSlider->setValue(throttleAxis);
+            throttleSlider->setValue(throttleValue);
         }else{
-            throttleAxis = throttleSlider->value();
+            throttleValue = throttleSlider->value();
         }
 
         if (!yawSlider->isSliderDown()){

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <libevdev/libevdev.h>
 #include <QTimer>
+#include <stdlib.h>
 #include "controller.hpp"
 
 #define CODE_BUTTON_A 304
@@ -24,6 +25,7 @@ int ButtonY = 0;
 int ButtonX = 0;
 int ButtonXBOX = 0;
 int throttleAxis = 0;
+int throttleValue = 0;
 int CWRotationTrigger = 0;
 int CCWRotationTrigger = 0;
 int pitchAxis = 0;
@@ -36,6 +38,12 @@ int remapInt(int value, int inMin, int inMax, int outMin, int outMax) {
     return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 }
 
+
+int clampInt(int value, int min, int max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
 
 std::string findControllerDevice(const std::string& expectedName) {
     for (int i = 0; i < 32; ++i) { // test /dev/input/event0 à event31
@@ -95,8 +103,6 @@ void Controller::initController(const std::string& expectedName)
     connect(notifier, &QSocketNotifier::activated,
             this, &Controller::readController);
 
-
-
 }
 
 void Controller::readController()
@@ -153,7 +159,8 @@ void Controller::readController()
             switch(ev.code)
             {
                 case CODE_THROTTLE_AXIS:
-                    throttleAxis = remapInt(-ev.value, 0, 32767, 48, 2047);
+                    throttleAxis = remapInt(-ev.value, -32768, 32767, -1000, 1000);
+                    throttleAxis = (abs(throttleAxis) * throttleAxis) / 15000;
                     break;
 
                 case CODE_CW_ROTATION_TRIGGER:

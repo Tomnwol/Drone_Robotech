@@ -9,13 +9,14 @@ extern int ButtonY;
 extern int ButtonX;
 extern int ButtonXBOX;
 extern int throttleAxis;
+extern int throttleValue;
 extern int CWRotationTrigger;
 extern int CCWRotationTrigger;
 extern int pitchAxis;
 extern int rollAxis;
 
 extern bool isControllerFound;
-
+int clampInt(int value, int min, int max);
 class Controller : public QObject
 {
     Q_OBJECT
