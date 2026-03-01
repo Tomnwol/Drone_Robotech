@@ -1,10 +1,14 @@
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QSlider>
 #include <QDoubleSpinBox>
 #include <QPushButton>
 #include "UDP.hpp"
 #include "configuration.hpp"
 #include "qtBoxConfiguration.hpp"
+
+#define OFFSET_MOTOR_MAX 100
+
 QDoubleSpinBox *kpSpin;
 QDoubleSpinBox *kiSpin;
 QDoubleSpinBox *kdSpin;
@@ -13,6 +17,38 @@ QGroupBox *configurationGroupBox = nullptr; // WARNING : ne pas intialiser en gl
 
 void initConfigurationBox(Config* config){
     configurationGroupBox = new QGroupBox("Configuration");
+
+    /****3.Left offset****/
+    QLabel *OM_FL_Label = new QLabel("");
+    QSlider *OM_FL_Slider = new QSlider(Qt::Horizontal);
+    //OM_FL_Slider->setInvertedAppearance(true);
+    OM_FL_Slider->setRange(0, OFFSET_MOTOR_MAX);
+    OM_FL_Slider->setValue(my_config.offsetMotorFL);
+    payload.offsetMotorFL = 0;
+    OM_FL_Label->setText("OM_FL Value : " + QString::number(OM_FL_Slider->value()));
+
+    QLabel *OM_BL_Label = new QLabel("");
+    QSlider *OM_BL_Slider = new QSlider(Qt::Horizontal);
+    OM_BL_Slider->setRange(0, OFFSET_MOTOR_MAX);
+    OM_BL_Slider->setValue(my_config.offsetMotorBL);
+    payload.offsetMotorBL = 0;
+    OM_BL_Label->setText("OM_BL Value : " + QString::number(OM_BL_Slider->value()));
+
+    /****3.Right offset****/
+    QLabel *OM_FR_Label = new QLabel("");
+    QSlider *OM_FR_Slider = new QSlider(Qt::Horizontal);
+    OM_FR_Slider->setRange(0, OFFSET_MOTOR_MAX);
+    OM_FR_Slider->setValue(my_config.offsetMotorFR);
+    payload.offsetMotorFR = 0;
+    OM_FR_Label->setText("OM_FR Value : " + QString::number(OM_FR_Slider->value()));
+
+    QLabel *OM_BR_Label = new QLabel("");
+    QSlider *OM_BR_Slider = new QSlider(Qt::Horizontal);
+    OM_BR_Slider->setRange(0, OFFSET_MOTOR_MAX);
+    OM_BR_Slider->setValue(my_config.offsetMotorBR);
+    payload.offsetMotorBR = 0;
+    OM_BR_Label->setText("OM_BR Value : " + QString::number(OM_BR_Slider->value()));
+
     /***2.Configuration->PID SpinBox***/
     QGroupBox *PID_GroupBox = new QGroupBox("PID Values");
     QVBoxLayout *vbox_PID = new QVBoxLayout;
@@ -48,6 +84,31 @@ void initConfigurationBox(Config* config){
     vbox_PID->addWidget(kdSpin);
     PID_GroupBox->setLayout(vbox_PID);
 
+    /***2.Offset Motors***/
+    QGroupBox *offsetsMotorsGroupBox = new QGroupBox("Offsets Motors");
+    QGroupBox *offsetsMotorsGroupBoxLeft = new QGroupBox("");
+    QGroupBox *offsetsMotorsGroupBoxRight = new QGroupBox("");
+    QVBoxLayout *offsetsMotorsVboxLeft = new QVBoxLayout;
+    QVBoxLayout *offsetsMotorsVboxRight = new QVBoxLayout;
+    QHBoxLayout *offsetsMotorsHbox = new QHBoxLayout;
+
+    offsetsMotorsVboxLeft->addWidget(OM_FL_Label);
+    offsetsMotorsVboxLeft->addWidget(OM_FL_Slider);
+    offsetsMotorsVboxLeft->addWidget(OM_BL_Label);
+    offsetsMotorsVboxLeft->addWidget(OM_BL_Slider);
+    offsetsMotorsGroupBoxLeft->setLayout(offsetsMotorsVboxLeft);
+
+    offsetsMotorsVboxRight->addWidget(OM_FR_Label);
+    offsetsMotorsVboxRight->addWidget(OM_FR_Slider);
+    offsetsMotorsVboxRight->addWidget(OM_BR_Label);
+    offsetsMotorsVboxRight->addWidget(OM_BR_Slider);
+    offsetsMotorsGroupBoxRight->setLayout(offsetsMotorsVboxRight);
+
+    offsetsMotorsHbox->addWidget(offsetsMotorsGroupBoxLeft);
+    offsetsMotorsHbox->addWidget(offsetsMotorsGroupBoxRight);
+
+    offsetsMotorsGroupBox->setLayout(offsetsMotorsHbox);
+
     /***2.Configuration->SaveParameters***/
     QGroupBox *saveGroupBox = new QGroupBox("Save Config");
     QVBoxLayout *saveVBox = new QVBoxLayout;
@@ -60,6 +121,7 @@ void initConfigurationBox(Config* config){
     //QGroupBox *configurationGroupBox = new QGroupBox("Configuration");
     QVBoxLayout *configurationVbox = new QVBoxLayout;
     configurationVbox->addWidget(PID_GroupBox);
+    configurationVbox->addWidget(offsetsMotorsGroupBox);
     configurationVbox->addWidget(saveGroupBox);
     configurationGroupBox->setLayout(configurationVbox);
 
@@ -88,6 +150,33 @@ void initConfigurationBox(Config* config){
         saveConfig(INITIAL_VALUES_PATH);
         std::cout << "Configuration saved !\n";
     });
+
+    /*Update OFFSETS*/
+    QObject::connect(OM_FL_Slider, &QSlider::valueChanged, [OM_FL_Label](int value){
+        OM_FL_Label->setText("OM_FL Value : " + QString::number(value));
+        my_config.offsetMotorFL = value;
+        payload.offsetMotorFL = value;  //Update value for UART
+    });
+
+    QObject::connect(OM_BL_Slider, &QSlider::valueChanged, [OM_BL_Label](int value){
+        OM_BL_Label->setText("OM_BL Value : " + QString::number(value));
+        my_config.offsetMotorBL = value;
+        payload.offsetMotorBL = value;  //Update value for UART
+    });
+
+    QObject::connect(OM_FR_Slider, &QSlider::valueChanged, [OM_FR_Label](int value){
+        OM_FR_Label->setText("OM_FR Value : " + QString::number(value));
+        my_config.offsetMotorFR = value;
+        payload.offsetMotorFR = value;  //Update value for UART
+    });
+
+    QObject::connect(OM_BR_Slider, &QSlider::valueChanged, [OM_BR_Label](int value){
+        OM_BR_Label->setText("OM_BR Value : " + QString::number(value));
+        my_config.offsetMotorBR = value;
+        payload.offsetMotorBR = value;  //Update value for UART
+    });
+
+
 }
 
 void noFocusPID(){

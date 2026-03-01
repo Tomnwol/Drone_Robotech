@@ -5,8 +5,8 @@ TARGET = drone_controller
 CXX = g++
 
 # Flags Qt via pkg-config
-CXXFLAGS = -Wall -Wextra -std=c++17 $(shell pkg-config --cflags Qt6Widgets Qt6SerialPort Qt6Network Qt6Quick Qt6QuickWidgets Qt6Quick3D)
-LDFLAGS  = $(shell pkg-config --libs Qt6Widgets Qt6SerialPort Qt6Network Qt6Quick Qt6QuickWidgets Qt6Quick3D)
+CXXFLAGS = -Wall -Wextra -std=c++17 $(shell pkg-config --cflags Qt6Widgets Qt6SerialPort Qt6Network Qt6Quick Qt6QuickWidgets Qt6Quick3D libevdev)
+LDFLAGS  = $(shell pkg-config --libs Qt6Widgets Qt6SerialPort Qt6Network Qt6Quick Qt6QuickWidgets Qt6Quick3D libevdev)
 
 # Sources
 SRC = $(wildcard *.cpp)

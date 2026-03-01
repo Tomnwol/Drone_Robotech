@@ -16,7 +16,7 @@
 #include <QKeyEvent>
 #include <QPushButton>
 #include <iostream>
-
+#include "controller.hpp"
 #include "UDP.hpp"
 #include "configuration.hpp"
 #include "qtStartBox.hpp"
@@ -51,8 +51,12 @@ int main(int argc, char *argv[])
 
     initStartBox(serial);
     initConfigurationBox(&my_config);
-    initControllerBox(&window);
+    Controller* controller = new Controller();
+    controller->initController("Generic X-Box pad");
+
+    initControllerBox(&window, controller);
     initDroneBox();
+
     /* 0.Main Box */
     QGroupBox *mainGroupBox = new QGroupBox("");
     QHBoxLayout *mainHBox = new QHBoxLayout;

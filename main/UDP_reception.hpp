@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include "types.hpp"
 extern uint16_t joyThrottle; //analogRead(A0);
-extern int16_t joyYaw;
+extern int16_t joyYaw; // - 1000 to 1000
 extern int16_t joyRoll;
 extern int16_t joyPitch;
 extern uint16_t GP_Pot;

@@ -8,56 +8,34 @@
 #include <QHBoxLayout>
 #include <QShortcut>
 #include <QKeyEvent>
+#include <QTimer>
 #include "qtControllerBox.hpp"
 #include "configuration.hpp"
+
 #include "UDP.hpp"
-#define OFFSET_MOTOR_MAX 100
+
 
 #define DSHOT_MIN 48
 #define DSHOT_MAX 2047
 
 #define ANGLE_MAX 1000  // (yaw/pitch/roll)
 
-
+Controller* local_controller;
 QGroupBox *controllerGroupBox = nullptr;
+QTimer *timerControllerUpdate = nullptr;
 bool KS_enable = false;
-void initControllerBox(QWidget* window){
 
-    /****3.Left offset****/
-    QLabel *OM_FL_Label = new QLabel("");
-    QSlider *OM_FL_Slider = new QSlider(Qt::Horizontal);
-    //OM_FL_Slider->setInvertedAppearance(true);
-    OM_FL_Slider->setRange(0, OFFSET_MOTOR_MAX);
-    OM_FL_Slider->setValue(my_config.offsetMotorFL);
-    payload.offsetMotorFL = 0;
-    OM_FL_Label->setText("OM_FL Value : " + QString::number(OM_FL_Slider->value()));
+bool lastButtonA = false;
+bool lastButtonB = false;
+bool lastButtonY = false;
+bool lastButtonX = false;
 
-    QLabel *OM_BL_Label = new QLabel("");
-    QSlider *OM_BL_Slider = new QSlider(Qt::Horizontal);
-    OM_BL_Slider->setRange(0, OFFSET_MOTOR_MAX);
-    OM_BL_Slider->setValue(my_config.offsetMotorBL);
-    payload.offsetMotorBL = 0;
-    OM_BL_Label->setText("OM_BL Value : " + QString::number(OM_BL_Slider->value()));
-
-    /****3.Right offset****/
-    QLabel *OM_FR_Label = new QLabel("");
-    QSlider *OM_FR_Slider = new QSlider(Qt::Horizontal);
-    OM_FR_Slider->setRange(0, OFFSET_MOTOR_MAX);
-    OM_FR_Slider->setValue(my_config.offsetMotorFR);
-    payload.offsetMotorFR = 0;
-    OM_FR_Label->setText("OM_FR Value : " + QString::number(OM_FR_Slider->value()));
-
-    QLabel *OM_BR_Label = new QLabel("");
-    QSlider *OM_BR_Slider = new QSlider(Qt::Horizontal);
-    OM_BR_Slider->setRange(0, OFFSET_MOTOR_MAX);
-    OM_BR_Slider->setValue(my_config.offsetMotorBR);
-    payload.offsetMotorBR = 0;
-    OM_BR_Label->setText("OM_BR Value : " + QString::number(OM_BR_Slider->value()));
-
+void initControllerBox(QWidget* window, Controller* controller){
+    local_controller = controller;
     /***2.Security Box***/
     QGroupBox *securityGroupBox = new QGroupBox("Security");
-    QCheckBox *FS_Check = new QCheckBox("FailSafe Switch (toggle on F)");
-    QCheckBox *killCheck = new QCheckBox("Kill Switch (space bar)", securityGroupBox);
+    QCheckBox *FS_Check = new QCheckBox("FailSafe Switch (KeyF, X or Y)");
+    QCheckBox *killCheck = new QCheckBox("Kill Switch (KeySpaceBar, A or B)", securityGroupBox);
     FS_Check->setChecked(true);
     payload.failSafeSwitch = 1;
     QVBoxLayout *securityVbox = new QVBoxLayout;
@@ -106,64 +84,17 @@ void initControllerBox(QWidget* window){
     motorsGroupBox->setLayout(motorsVbox);
 
 
-    /***2.Offset Motors***/
-    QGroupBox *offsetsMotorsGroupBox = new QGroupBox("Offsets Motors");
-    QGroupBox *offsetsMotorsGroupBoxLeft = new QGroupBox("");
-    QGroupBox *offsetsMotorsGroupBoxRight = new QGroupBox("");
-    QVBoxLayout *offsetsMotorsVboxLeft = new QVBoxLayout;
-    QVBoxLayout *offsetsMotorsVboxRight = new QVBoxLayout;
-    QHBoxLayout *offsetsMotorsHbox = new QHBoxLayout;
 
-    offsetsMotorsVboxLeft->addWidget(OM_FL_Label);
-    offsetsMotorsVboxLeft->addWidget(OM_FL_Slider);
-    offsetsMotorsVboxLeft->addWidget(OM_BL_Label);
-    offsetsMotorsVboxLeft->addWidget(OM_BL_Slider);
-    offsetsMotorsGroupBoxLeft->setLayout(offsetsMotorsVboxLeft);
-
-    offsetsMotorsVboxRight->addWidget(OM_FR_Label);
-    offsetsMotorsVboxRight->addWidget(OM_FR_Slider);
-    offsetsMotorsVboxRight->addWidget(OM_BR_Label);
-    offsetsMotorsVboxRight->addWidget(OM_BR_Slider);
-    offsetsMotorsGroupBoxRight->setLayout(offsetsMotorsVboxRight);
-
-    offsetsMotorsHbox->addWidget(offsetsMotorsGroupBoxLeft);
-    offsetsMotorsHbox->addWidget(offsetsMotorsGroupBoxRight);
-
-    offsetsMotorsGroupBox->setLayout(offsetsMotorsHbox);
 
     /**1.Controller**/
     controllerGroupBox = new QGroupBox("Controller");
     controllerGroupBox->setEnabled(false); // Control non disponible tant que le serial n'est pas activé
     QVBoxLayout *controllerVbox = new QVBoxLayout;
     controllerVbox->addWidget(motorsGroupBox);
-    controllerVbox->addWidget(offsetsMotorsGroupBox);
+    //controllerVbox->addWidget(offsetsMotorsGroupBox);
     controllerVbox->addWidget(securityGroupBox);
     controllerGroupBox->setLayout(controllerVbox);
 
-    /*Update OFFSETS*/
-    QObject::connect(OM_FL_Slider, &QSlider::valueChanged, [OM_FL_Label](int value){
-        OM_FL_Label->setText("OM_FL Value : " + QString::number(value));
-        my_config.offsetMotorFL = value;
-        payload.offsetMotorFL = value;  //Update value for UART
-    });
-
-    QObject::connect(OM_BL_Slider, &QSlider::valueChanged, [OM_BL_Label](int value){
-        OM_BL_Label->setText("OM_BL Value : " + QString::number(value));
-        my_config.offsetMotorBL = value;
-        payload.offsetMotorBL = value;  //Update value for UART
-    });
-
-    QObject::connect(OM_FR_Slider, &QSlider::valueChanged, [OM_FR_Label](int value){
-        OM_FR_Label->setText("OM_FR Value : " + QString::number(value));
-        my_config.offsetMotorFR = value;
-        payload.offsetMotorFR = value;  //Update value for UART
-    });
-
-    QObject::connect(OM_BR_Slider, &QSlider::valueChanged, [OM_BR_Label](int value){
-        OM_BR_Label->setText("OM_BR Value : " + QString::number(value));
-        my_config.offsetMotorBR = value;
-        payload.offsetMotorBR = value;  //Update value for UART
-    });
 
     QShortcut *FS_Shortcut = new QShortcut(QKeySequence(Qt::Key_F), window);
     QObject::connect(FS_Shortcut, &QShortcut::activated, FS_Check, [FS_Check]() { //Active/Désactive la limitation moteur (côté drone)
@@ -198,6 +129,7 @@ void initControllerBox(QWidget* window){
         QSignalBlocker blocker(killCheck);
         killCheck->setEnabled(false);
         payload.killSwitch = 1;
+        std::cout << "KILLSWITCHED" << std::endl;
     });
 
     QObject::connect(throttleSlider, &QSlider::valueChanged, [throttleLabel](int value){ //Update la valeur de Throttle
@@ -219,4 +151,42 @@ void initControllerBox(QWidget* window){
         pitchLabel->setText("Pitch Value : " + QString::number(value));
         payload.pitch = value;  //Update value for UART
     });
+
+    timerControllerUpdate = new QTimer();
+    timerControllerUpdate->setInterval(20); // 20 ms → 50 Hz
+
+    QObject::connect(timerControllerUpdate, &QTimer::timeout, [throttleSlider, rollSlider, pitchSlider, killCheck, FS_Check]() {
+        if (!throttleSlider->isSliderDown()){
+            throttleSlider->setValue(throttleAxis);
+        }else{
+            throttleAxis = throttleSlider->value();
+        }
+        if (!rollSlider->isSliderDown()){
+            rollSlider->setValue(rollAxis);
+        }else{
+            rollAxis = rollSlider->value();
+        }
+
+        if (!pitchSlider->isSliderDown()){
+            pitchSlider->setValue(pitchAxis);
+        }else{
+            pitchAxis = pitchSlider->value();
+        }
+
+        if ( (ButtonA && !lastButtonA) | (ButtonB && !lastButtonB) ){
+            if (KS_enable){
+                killCheck->setChecked(true);
+            }
+        }else if( (ButtonY && !lastButtonY) | (ButtonX && !lastButtonX) ){
+            FS_Check->setChecked(not FS_Check->isChecked());
+        }
+
+        lastButtonA = ButtonA;
+        lastButtonB = ButtonB;
+        lastButtonY = ButtonY;
+        lastButtonX = ButtonX;
+
+    });
+    timerControllerUpdate->start();
+
 }

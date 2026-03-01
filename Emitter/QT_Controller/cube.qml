@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick3D
 
 Item {
-    width: 300
-    height: 300
+    width: 200
+    height: 200
 
     View3D {
         anchors.fill: parent

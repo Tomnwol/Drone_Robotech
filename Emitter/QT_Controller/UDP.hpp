@@ -31,6 +31,13 @@ typedef struct pl{
 // QString initialValuesPath = "initialValues.ini";
 extern Payload payload;
 extern uint8_t droneBattery;
+extern int16_t droneYaw;
+extern int16_t droneRoll;
+extern int16_t dronePitch;
+extern uint16_t droneMotorFL;
+extern uint16_t droneMotorFR;
+extern uint16_t droneMotorBR;
+extern uint16_t droneMotorBL;
 void configure_UDP();
 
 

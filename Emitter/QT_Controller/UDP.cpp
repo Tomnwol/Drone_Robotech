@@ -2,7 +2,17 @@
 
 QUdpSocket* udpSocket = nullptr;
 QTimer* timer = nullptr;
-uint8_t droneBattery = 255;
+uint8_t droneBattery= 255;
+int16_t droneYaw = 0;
+int16_t droneRoll = 0;
+int16_t dronePitch = 0;
+uint16_t droneMotorFL = 48;
+uint16_t droneMotorFR = 48;
+uint16_t droneMotorBR = 48;
+uint16_t droneMotorBL = 48;
+
+
+
 Payload payload;
 void configure_UDP(){
 
@@ -67,8 +77,16 @@ void configure_UDP(){
 
             if (datagram.size() == 15) { // Rajouter la récupération des autres paquets (pour CSV)
                 droneBattery = datagram[0];
+                droneYaw =     datagram[1] | (datagram[2] << 8);
+                droneRoll =    datagram[3] | (datagram[4] << 8);
+                dronePitch =   datagram[5] | (datagram[6] << 8);
+                droneMotorFL = datagram[7] | (datagram[8] << 8);
+                droneMotorFR = datagram[9] | (datagram[10] << 8);
+                droneMotorBR = datagram[11] | (datagram[12] << 8);
+                droneMotorBL = datagram[13] | (datagram[14] << 8);
             }
         }
     });
+
 }
 

@@ -2,13 +2,15 @@
 #include <QCheckBox>
 #include <QVBoxLayout>
 #include <QString>
+#include <QTimer>
 #include "qtControllerBox.hpp"
 #include "configuration.hpp"
 #include "qtBoxConfiguration.hpp"
 #include "UDP.hpp"
+#include "controller.hpp"
 
 QGroupBox *startGroupBox = nullptr;
-
+QTimer* timerUDPActivation = nullptr;
 void initStartBox(QSerialPort* serial){
     /***2.Communication***/
     QGroupBox *communicationGroupBox = new QGroupBox("Communication");
@@ -32,5 +34,18 @@ void initStartBox(QSerialPort* serial){
         UDPCheck->setEnabled(false);
         configure_UDP();
     });
+
+    timerUDPActivation = new QTimer();
+    timerUDPActivation->setInterval(20); // 20 ms → 50 Hz
+
+    QObject::connect(timerUDPActivation, &QTimer::timeout, [UDPCheck]() {
+        if( ButtonXBOX ){
+            UDPCheck->setChecked(true);
+        }
+        timerUDPActivation->stop();
+    });
+    timerUDPActivation->start();
+
+
 
 }
