@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <libevdev/libevdev.h>
+#include <QTimer>
 #include "controller.hpp"
 
 #define CODE_BUTTON_A 304
@@ -28,6 +29,7 @@ int CCWRotationTrigger = 0;
 int pitchAxis = 0;
 int rollAxis = 0;
 
+bool isControllerFound = false;
 
 int remapInt(int value, int inMin, int inMax, int outMin, int outMax) {
     if (inMax == inMin) return outMin; // éviter division par zéro
@@ -64,8 +66,12 @@ Controller::Controller(QObject* parent)
 void Controller::initController(const std::string& expectedName)
 {
     std::string device = findControllerDevice(expectedName);
+    static bool messageAlreadyAppeared = false;
     if (device.empty()) {
-        std::cerr << "Manette \"" << expectedName << "\" non trouvée !\n";
+        if ( !messageAlreadyAppeared){
+            messageAlreadyAppeared = true;
+            std::cerr << "Manette \"" << expectedName << "\" non trouvée !\n";
+        }
         return;
     }
     fd = open(device.c_str(), O_RDONLY | O_NONBLOCK);
@@ -83,21 +89,53 @@ void Controller::initController(const std::string& expectedName)
     std::cout << "Manette détectée: "
     << libevdev_get_name(dev)
     << std::endl;
-
+    isControllerFound = true;
     notifier = new QSocketNotifier(fd, QSocketNotifier::Read, this);
 
     connect(notifier, &QSocketNotifier::activated,
             this, &Controller::readController);
+
+
+
 }
 
 void Controller::readController()
 {
     input_event ev;
-
-    while (libevdev_next_event(dev,
+    int rc;
+    while ((rc = libevdev_next_event(dev,
         LIBEVDEV_READ_FLAG_NORMAL,
-        &ev) == 0)
+        &ev)) != -EAGAIN)
     {
+
+        // Déconnexion détectée
+        if (rc == -ENODEV) {
+            std::cerr << "Manette déconnectée !\n";
+
+            isControllerFound = false;
+
+            if (notifier) {
+                notifier->setEnabled(false);
+                delete notifier;
+                notifier = nullptr;
+            }
+
+            if (dev) {
+                libevdev_free(dev);
+                dev = nullptr;
+            }
+
+            if (fd >= 0) {
+                close(fd);
+                fd = -1;
+            }
+
+            return;
+        }
+
+        if (rc != 0)
+            continue;
+
         if (ev.type == EV_KEY)
         {
             switch(ev.code)
@@ -119,11 +157,11 @@ void Controller::readController()
                     break;
 
                 case CODE_CW_ROTATION_TRIGGER:
-                    CWRotationTrigger = ev.value;
+                    CWRotationTrigger = remapInt(ev.value, 0, 1023, 0, JOYSTICK_RESOLUTION);
                     break;
 
                 case CODE_CCW_ROTATION_TRIGGER:
-                    CCWRotationTrigger = ev.value;
+                    CCWRotationTrigger = remapInt(ev.value, 0, 1023, 0, JOYSTICK_RESOLUTION);
                     break;
 
                 case CODE_PITCH_AXIS:

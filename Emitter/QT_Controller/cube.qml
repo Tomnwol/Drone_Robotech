@@ -36,7 +36,7 @@ Item {
             eulerRotation.z: roll
 
             materials: DefaultMaterial {
-                diffuseColor: "red"
+                diffuseColor: "blue"
             }
         }
     }

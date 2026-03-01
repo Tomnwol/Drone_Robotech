@@ -138,7 +138,7 @@ void initDroneBox(){
     pitchLabel->setText("Pitch : " + QString::number(pitchSlider->value()));
 
     QGroupBox *attitudesGroupBox = new QGroupBox("");
-    QGroupBox *attitudePBGroupBox = new QGroupBox("Attitude mesurée");
+    QGroupBox *attitudePBGroupBox = new QGroupBox("Attitude measured");
     QVBoxLayout *attitudePBVbox = new QVBoxLayout;
     QHBoxLayout *attitudesHbox = new QHBoxLayout;
     attitudePBVbox->addWidget(yawLabel);
@@ -176,6 +176,7 @@ void initDroneBox(){
     BR_Label->setText("BR Value : " + QString::number(BR_Slider->value()));
 
     droneGroupBox = new QGroupBox("Drone");
+    droneGroupBox->setStyleSheet("QGroupBox { font-family: 'DejaVu Sans Mono'; font-size: 16px;  font-weight: bold; }");
     droneBatteryLabel = new QLabel("");
 
     QVBoxLayout *droneVbox = new QVBoxLayout;
@@ -241,10 +242,16 @@ void initDroneBox(){
 
     root = quickWidget->rootObject();
 
+    MotorsGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
+    attitudesGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
+
+    MotorsGroupBox->setEnabled(false);
+    attitudesGroupBox->setEnabled(false);
+
     droneVbox->addWidget(attitudesGroupBox);
     //droneGroupBox->setLayout(MotorsHbox);
     droneGroupBox->setLayout(droneVbox);
-    droneGroupBox->setEnabled(false);
+
     QObject::connect(yawSlider, &QSlider::valueChanged, [yawLabel](int value){
         yawLabel->setText("Yaw : " + QString::number(value));
     });

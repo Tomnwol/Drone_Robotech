@@ -14,6 +14,8 @@ extern int CCWRotationTrigger;
 extern int pitchAxis;
 extern int rollAxis;
 
+extern bool isControllerFound;
+
 class Controller : public QObject
 {
     Q_OBJECT

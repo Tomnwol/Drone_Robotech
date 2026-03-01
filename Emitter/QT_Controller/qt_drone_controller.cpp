@@ -54,6 +54,19 @@ int main(int argc, char *argv[])
     Controller* controller = new Controller();
     controller->initController("Generic X-Box pad");
 
+    QTimer* reconnectTimer = new QTimer();
+    reconnectTimer->setInterval(300); // toutes les 1s
+
+    QObject::connect(reconnectTimer, &QTimer::timeout, [controller]() {
+
+        if (!isControllerFound) {
+            controller->initController("Generic X-Box pad");
+        }
+
+    });
+
+    reconnectTimer->start();
+
     initControllerBox(&window, controller);
     initDroneBox();
 

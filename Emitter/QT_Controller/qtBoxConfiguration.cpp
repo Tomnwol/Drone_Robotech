@@ -17,6 +17,7 @@ QGroupBox *configurationGroupBox = nullptr; // WARNING : ne pas intialiser en gl
 
 void initConfigurationBox(Config* config){
     configurationGroupBox = new QGroupBox("Configuration");
+    configurationGroupBox->setStyleSheet("QGroupBox { font-family: 'DejaVu Sans Mono'; font-size: 16px;  font-weight: bold; }");
 
     /****3.Left offset****/
     QLabel *OM_FL_Label = new QLabel("");
@@ -120,6 +121,11 @@ void initConfigurationBox(Config* config){
     /**1.Configuration**/
     //QGroupBox *configurationGroupBox = new QGroupBox("Configuration");
     QVBoxLayout *configurationVbox = new QVBoxLayout;
+
+    PID_GroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
+    offsetsMotorsGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
+    saveGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
+
     configurationVbox->addWidget(PID_GroupBox);
     configurationVbox->addWidget(offsetsMotorsGroupBox);
     configurationVbox->addWidget(saveGroupBox);

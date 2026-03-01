@@ -36,6 +36,12 @@ void initControllerBox(QWidget* window, Controller* controller){
     QGroupBox *securityGroupBox = new QGroupBox("Security");
     QCheckBox *FS_Check = new QCheckBox("FailSafe Switch (KeyF, X or Y)");
     QCheckBox *killCheck = new QCheckBox("Kill Switch (KeySpaceBar, A or B)", securityGroupBox);
+    killCheck->setStyleSheet(
+        "QCheckBox::indicator:checked {"
+        "background-color: #aa0000;"
+        "border: 1px solid black;"
+        "}"
+    );
     FS_Check->setChecked(true);
     payload.failSafeSwitch = 1;
     QVBoxLayout *securityVbox = new QVBoxLayout;
@@ -88,10 +94,13 @@ void initControllerBox(QWidget* window, Controller* controller){
 
     /**1.Controller**/
     controllerGroupBox = new QGroupBox("Controller");
+    controllerGroupBox->setStyleSheet("QGroupBox { font-family: 'DejaVu Sans Mono'; font-size: 16px;  font-weight: bold; }");
     controllerGroupBox->setEnabled(false); // Control non disponible tant que le serial n'est pas activé
     QVBoxLayout *controllerVbox = new QVBoxLayout;
+
+    motorsGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
+    securityGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
     controllerVbox->addWidget(motorsGroupBox);
-    //controllerVbox->addWidget(offsetsMotorsGroupBox);
     controllerVbox->addWidget(securityGroupBox);
     controllerGroupBox->setLayout(controllerVbox);
 
@@ -155,12 +164,17 @@ void initControllerBox(QWidget* window, Controller* controller){
     timerControllerUpdate = new QTimer();
     timerControllerUpdate->setInterval(20); // 20 ms → 50 Hz
 
-    QObject::connect(timerControllerUpdate, &QTimer::timeout, [throttleSlider, rollSlider, pitchSlider, killCheck, FS_Check]() {
+    QObject::connect(timerControllerUpdate, &QTimer::timeout, [throttleSlider, yawSlider, rollSlider, pitchSlider, killCheck, FS_Check]() {
         if (!throttleSlider->isSliderDown()){
             throttleSlider->setValue(throttleAxis);
         }else{
             throttleAxis = throttleSlider->value();
         }
+
+        if (!yawSlider->isSliderDown()){
+            yawSlider->setValue(CWRotationTrigger - CCWRotationTrigger);
+        }
+
         if (!rollSlider->isSliderDown()){
             rollSlider->setValue(rollAxis);
         }else{
