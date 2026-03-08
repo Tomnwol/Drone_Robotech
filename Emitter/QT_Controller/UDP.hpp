@@ -9,6 +9,7 @@
 #include <iostream>
 #define INITIAL_VALUES_PATH "initialValues.ini"
 // Adresse IP et port de l'ESP32
+const QString ESP_SSID = "ESP32_Tom";
 const QString ESP32_IP = "192.168.4.1";  // IP ESP32 en mode AP
 const quint16 ESP32_PORT = 4210;
 #define PID_MULTIPLICATOR 100 // On mutiplie KP, KI et KD par 100 pour garder 2 décimales suplémentaires, il faudra /100 du côté drone par contre
