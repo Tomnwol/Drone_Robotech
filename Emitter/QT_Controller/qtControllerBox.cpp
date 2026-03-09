@@ -13,7 +13,7 @@
 #include "configuration.hpp"
 
 #include "UDP.hpp"
-
+#include "qtStyles.hpp"
 
 #define DSHOT_MIN 48
 #define DSHOT_MAX 2047
@@ -94,12 +94,12 @@ void initControllerBox(QWidget* window, Controller* controller){
 
     /**1.Controller**/
     controllerGroupBox = new QGroupBox("Controller");
-    controllerGroupBox->setStyleSheet("QGroupBox { font-family: 'DejaVu Sans Mono'; font-size: 16px;  font-weight: bold; }");
+    controllerGroupBox->setStyleSheet(TITLE_LABEL_STYLE);
     controllerGroupBox->setEnabled(false); // Control non disponible tant que le serial n'est pas activé
     QVBoxLayout *controllerVbox = new QVBoxLayout;
 
-    motorsGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
-    securityGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
+    motorsGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    securityGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
     controllerVbox->addWidget(motorsGroupBox);
     controllerVbox->addWidget(securityGroupBox);
     controllerGroupBox->setLayout(controllerVbox);

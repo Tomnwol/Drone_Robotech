@@ -6,6 +6,7 @@
 #include "UDP.hpp"
 #include "configuration.hpp"
 #include "qtBoxConfiguration.hpp"
+#include "qtStyles.hpp"
 
 #define OFFSET_MOTOR_MAX 100
 
@@ -17,7 +18,7 @@ QGroupBox *configurationGroupBox = nullptr; // WARNING : ne pas intialiser en gl
 
 void initConfigurationBox(Config* config){
     configurationGroupBox = new QGroupBox("Configuration");
-    configurationGroupBox->setStyleSheet("QGroupBox { font-family: 'DejaVu Sans Mono'; font-size: 16px;  font-weight: bold; }");
+    configurationGroupBox->setStyleSheet(TITLE_LABEL_STYLE);
 
     /****3.Left offset****/
     QLabel *OM_FL_Label = new QLabel("");
@@ -122,9 +123,9 @@ void initConfigurationBox(Config* config){
     //QGroupBox *configurationGroupBox = new QGroupBox("Configuration");
     QVBoxLayout *configurationVbox = new QVBoxLayout;
 
-    PID_GroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
-    offsetsMotorsGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
-    saveGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
+    PID_GroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    offsetsMotorsGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    saveGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
 
     configurationVbox->addWidget(PID_GroupBox);
     configurationVbox->addWidget(offsetsMotorsGroupBox);

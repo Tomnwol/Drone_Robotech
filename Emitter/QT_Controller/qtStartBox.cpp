@@ -10,6 +10,7 @@
 #include "UDP.hpp"
 #include "controller.hpp"
 #include "wifiConnection.hpp"
+#include "qtStyles.hpp"
 
 QGroupBox *startGroupBox = nullptr;
 QTimer* timerUDPActivation = nullptr;
@@ -39,45 +40,24 @@ void checkWiFiConnection(){
 void initStartBox(QSerialPort* serial){
     /***2.Communication***/
     QGroupBox *communicationGroupBox = new QGroupBox("Communication");
-    communicationGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
+    communicationGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
     QVBoxLayout *communicationVbox = new QVBoxLayout;
 
     QString connectToWiFi = QString("WiFi Connection");
     connectToWiFiCheck = new QCheckBox("WiFi Not Connected");
     connectToWiFiCheck->setStyleSheet(
-        "QCheckBox::indicator:unchecked {"
-        "background-color: #ffdddd;"
-        "border: 1px solid gray;"
-        "}"
-        "QCheckBox::indicator:checked {"
-        "background-color: #00AA00;"
-        "border: 1px solid black;"
-        "}"
+        CLASSIC_CHECKBOX_STYLE
     );
 
     QCheckBox *controllerFoundCheck = new QCheckBox("Controller Not Found");
     controllerFoundCheck->setEnabled(false);
     controllerFoundCheck->setStyleSheet(
-        "QCheckBox::indicator:unchecked {"
-        "background-color: #ffdddd;"
-        "border: 1px solid gray;"
-        "}"
-        "QCheckBox::indicator:checked {"
-        "background-color: #00AA00;"
-        "border: 1px solid black;"
-        "}"
+        CLASSIC_CHECKBOX_STYLE
     );
     QString UDPBoxName = QString("UDP communication (XBOX)");
     UDPCheck = new QCheckBox(UDPBoxName);
     UDPCheck->setStyleSheet(
-        "QCheckBox::indicator:unchecked {"
-        "background-color: #ffdddd;"
-        "border: 1px solid gray;"
-        "}"
-        "QCheckBox::indicator:checked {"
-        "background-color: #00AA00;"
-        "border: 1px solid black;"
-        "}"
+        CLASSIC_CHECKBOX_STYLE
     );
     UDPCheck->setEnabled(false);
     //communicationVbox->addWidget(connectToWiFi);
@@ -88,7 +68,7 @@ void initStartBox(QSerialPort* serial){
 
     /**1.Start**/
     startGroupBox = new QGroupBox("Start");
-    startGroupBox->setStyleSheet("QGroupBox { font-family: 'DejaVu Sans Mono'; font-size: 16px;  font-weight: bold; }");
+    startGroupBox->setStyleSheet(TITLE_LABEL_STYLE);
     QVBoxLayout *startVbox = new QVBoxLayout;
     startVbox->addWidget(communicationGroupBox);
     startGroupBox->setLayout(startVbox);
@@ -104,7 +84,7 @@ void initStartBox(QSerialPort* serial){
     QObject::connect(connectToWiFiCheck, &QCheckBox::toggled, [&](bool checked){ // Active la manette et lance la communcation série
         connectToWiFiCheck->setText("WiFi Loading");
         connectToWiFiCheck->setStyleSheet(
-            "QCheckBox::indicator:checked { background-color: #555555; border: 1px solid black; }"
+            LOADING_LABEL_STYLE
         );
         QCoreApplication::processEvents();
         QSignalBlocker blocker(connectToWiFiCheck);
@@ -118,16 +98,7 @@ void initStartBox(QSerialPort* serial){
             connectToWiFiCheck->setChecked(false);
             connectToWiFiCheck->setText("WiFi Not Connected");
         }
-        connectToWiFiCheck->setStyleSheet(
-            "QCheckBox::indicator:unchecked {"
-            "background-color: #ffdddd;"
-            "border: 1px solid gray;"
-            "}"
-            "QCheckBox::indicator:checked {"
-            "background-color: #00AA00;"
-            "border: 1px solid black;"
-            "}"
-        );
+        connectToWiFiCheck->setStyleSheet(CLASSIC_CHECKBOX_STYLE);
     });
 
 

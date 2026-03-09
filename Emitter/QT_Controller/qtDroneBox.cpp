@@ -10,6 +10,7 @@
 #include <QQuickItem>
 #include "qtDroneBox.hpp"
 #include "UDP.hpp"
+#include "qtStyles.hpp"
 
 QGroupBox *droneGroupBox = nullptr;
 QQuickWidget *quickWidget = nullptr;
@@ -176,7 +177,7 @@ void initDroneBox(){
     BR_Label->setText("BR Value : " + QString::number(BR_Slider->value()));
 
     droneGroupBox = new QGroupBox("Drone");
-    droneGroupBox->setStyleSheet("QGroupBox { font-family: 'DejaVu Sans Mono'; font-size: 16px;  font-weight: bold; }");
+    droneGroupBox->setStyleSheet(TITLE_LABEL_STYLE);
     droneBatteryLabel = new QLabel("");
 
     QVBoxLayout *droneVbox = new QVBoxLayout;
@@ -242,8 +243,8 @@ void initDroneBox(){
 
     root = quickWidget->rootObject();
 
-    MotorsGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
-    attitudesGroupBox->setStyleSheet("QGroupBox { font-weight: normal; }");
+    MotorsGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    attitudesGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
 
     MotorsGroupBox->setEnabled(false);
     attitudesGroupBox->setEnabled(false);
