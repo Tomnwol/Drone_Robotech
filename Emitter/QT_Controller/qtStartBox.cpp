@@ -101,7 +101,7 @@ void initStartBox(QSerialPort* serial){
     });
     timerWiFiVerification->start();
 
-    QObject::connect(connectToWiFiCheck, &QCheckBox::toggled, [&, UDPCheck, connectToWiFiCheck](bool checked){ // Active la manette et lance la communcation série
+    QObject::connect(connectToWiFiCheck, &QCheckBox::toggled, [&](bool checked){ // Active la manette et lance la communcation série
         connectToWiFiCheck->setText("WiFi Loading");
         connectToWiFiCheck->setStyleSheet(
             "QCheckBox::indicator:checked { background-color: #555555; border: 1px solid black; }"
@@ -131,7 +131,7 @@ void initStartBox(QSerialPort* serial){
     });
 
 
-    QObject::connect(UDPCheck, &QCheckBox::toggled, [&, UDPCheck, serial](bool checked){ // Active la manette et lance la communcation série
+    QObject::connect(UDPCheck, &QCheckBox::toggled, [&, serial](bool checked){ // Active la manette et lance la communcation série
         checked = checked; // no effect, avoid warning
         controllerGroupBox->setEnabled(true);
         KS_enable = true;
@@ -143,7 +143,7 @@ void initStartBox(QSerialPort* serial){
     timerUDPActivation = new QTimer();
     timerUDPActivation->setInterval(200); // 20 ms → 50 Hz
 
-    QObject::connect(timerUDPActivation, &QTimer::timeout, [UDPCheck, controllerFoundCheck]() {
+    QObject::connect(timerUDPActivation, &QTimer::timeout, [controllerFoundCheck]() {
         if( ButtonXBOX ){
             UDPCheck->setChecked(true);
         }
