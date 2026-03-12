@@ -253,6 +253,8 @@ void initDroneBox(){
     //droneGroupBox->setLayout(MotorsHbox);
     droneGroupBox->setLayout(droneVbox);
 
+
+
     QObject::connect(yawSlider, &QSlider::valueChanged, [yawLabel](int value){
         yawLabel->setText("Yaw : " + QString::number(value));
     });
@@ -263,6 +265,19 @@ void initDroneBox(){
 
     QObject::connect(pitchSlider, &QSlider::valueChanged, [pitchLabel](int value){
         pitchLabel->setText("Pitch : " + QString::number(value));
+    });
+
+    QObject::connect(FL_Slider, &QSlider::valueChanged, [FL_Label](int value){
+        FL_Label->setText("FL Value : " + QString::number(value));
+    });
+    QObject::connect(BL_Slider, &QSlider::valueChanged, [BL_Label](int value){
+        BL_Label->setText("BL Value : " + QString::number(value));
+    });
+    QObject::connect(FR_Slider, &QSlider::valueChanged, [FR_Label](int value){
+        FR_Label->setText("FR Value : " + QString::number(value));
+    });
+    QObject::connect(BR_Slider, &QSlider::valueChanged, [BR_Label](int value){
+        BR_Label->setText("BR Value : " + QString::number(value));
     });
 
 }

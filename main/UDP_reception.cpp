@@ -66,6 +66,8 @@ void sendTelemetry(uint8_t batteryVoltage, int16_t yaw_telemetry, int16_t roll_t
     if (pcPort != 0) {
         udp.beginPacket(pcIP, pcPort);
         uint8_t buf[15];
+        Serial.print("FL1 :");
+        Serial.println(MOT_FL_telemetry);
         buf[0] = batteryVoltage;
         buf[1] = yaw_telemetry & 0xFF;
         buf[2] = (yaw_telemetry >> 8) & 0xFF;
@@ -95,6 +97,8 @@ void handleSendTelemetry(Euler att_telemetry, uint16_t MOT_FL_telemetry, uint16_
         uint8_t value = batteryPercentage(); // Lis la valeur de la batterie ( entre 2,32V et 1,91)
         Serial.print("Batterie Percent :");
         Serial.println(value);
+        Serial.print("FL0 :");
+        Serial.println(MOT_FL_telemetry);
         int16_t yaw_telemetry = (int16_t)(att_telemetry.yaw * 180.0f / M_PI);
         int16_t roll_telemetry = (int16_t)(att_telemetry.roll * 180.0f / M_PI);
         int16_t pitch_telemetry = (int16_t)(att_telemetry.pitch * 180.0f / M_PI);

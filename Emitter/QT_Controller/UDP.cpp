@@ -84,6 +84,8 @@ void configure_UDP(){
                 droneMotorFR = datagram[9] | (datagram[10] << 8);
                 droneMotorBR = datagram[11] | (datagram[12] << 8);
                 droneMotorBL = datagram[13] | (datagram[14] << 8);
+                std::cout << "Drone FL value\n" <<  droneMotorFL << std::endl;
+
             }
         }
     });

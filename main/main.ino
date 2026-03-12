@@ -297,17 +297,22 @@ void fc_task() {
     uint16_t MOT_FR = (uint16_t)float_clamp(prev_mFR, 48.0, motor_max_value);
     uint16_t MOT_BR = (uint16_t)float_clamp(prev_mBR, 48.0, motor_max_value);
     uint16_t MOT_BL = (uint16_t)float_clamp(prev_mBL, 48.0, motor_max_value);
-    MOT_FL_telemetry = MOT_FL;
-    MOT_FR_telemetry = MOT_FR;
-    MOT_BR_telemetry = MOT_BR;
-    MOT_BL_telemetry = MOT_BL;
+
 
     if(!motor_zero){
+      MOT_FL_telemetry = MOT_FL;
+      MOT_FR_telemetry = MOT_FR;
+      MOT_BR_telemetry = MOT_BR;
+      MOT_BL_telemetry = MOT_BL;
       motorFL.sendThrottle(MOT_FL);
       motorFR.sendThrottle(MOT_FR);
       motorBL.sendThrottle(MOT_BL);
       motorBR.sendThrottle(MOT_BR);
     }else{
+      MOT_FL_telemetry = 48;
+      MOT_FR_telemetry = 48;
+      MOT_BR_telemetry = 48;
+      MOT_BL_telemetry = 48;
       motors_zeroes();
     }
 
