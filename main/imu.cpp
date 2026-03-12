@@ -143,4 +143,5 @@ Euler get_att_desired(){
     att_desired.roll  = roll_cmd  * MAX_ANGLE_RAD;
     att_desired.pitch = pitch_cmd * MAX_ANGLE_RAD;
     att_desired.yaw   = 0.0f;   // pour l'instant
+    return att_desired;
 }
