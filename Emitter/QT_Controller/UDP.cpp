@@ -80,11 +80,11 @@ void configure_UDP(){
                 droneYaw =     datagram[1] | (datagram[2] << 8);
                 droneRoll =    datagram[3] | (datagram[4] << 8);
                 dronePitch =   datagram[5] | (datagram[6] << 8);
-                droneMotorFL = datagram[7] | (datagram[8] << 8);
-                droneMotorFR = datagram[9] | (datagram[10] << 8);
-                droneMotorBR = datagram[11] | (datagram[12] << 8);
-                droneMotorBL = datagram[13] | (datagram[14] << 8);
-                std::cout << "Drone FL value\n" <<  droneMotorFL << std::endl;
+                droneMotorFL = (uint8_t)datagram[7] | ((uint8_t)datagram[8] << 8);
+                droneMotorFR = (uint8_t)datagram[9] | ((uint8_t)datagram[10] << 8);
+                droneMotorBR = (uint8_t)datagram[11] | ((uint8_t)datagram[12] << 8);
+                droneMotorBL = (uint8_t)datagram[13] | ((uint8_t)datagram[14] << 8);
+                std::cout << "Drone FL value\n" <<  droneMotorFL << std::endl; // bug
 
             }
         }
