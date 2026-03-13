@@ -254,12 +254,13 @@ void fc_task() {
     }
     digitalWrite(GP_LED, HIGH);
     // Vérification de l'armement du drone. Une fois que le drone est armé, ce n'est plus vérfié
+    if (debug_counter2 >= 100) {
+      debug_counter2 = 0;
+      Serial.printf("DEBUG2:%d, %d\n", joyThrottle, udp_delta_time);
+    }
     if( !is_arm_mode_enable ){ 
       is_arm_mode_enable = arm_mode_enable();
-      if (debug_counter2 >= 10) {
-        debug_counter2 = 0;
-        Serial.printf("DEBUG2:%d, %d\n", joyThrottle, udp_delta_time);
-      }
+
       if (is_arm_mode_enable){ //La LED prévient que le drone a été armé
         digitalWrite(ARM_LED, HIGH);
         //Ce serait mieux d'armer les moteurs ici, cependant, => Problématique en communication unidirectionnelle si un moteur failli ( et si on laisse une séquence de démarrage tout ça, après on a le problème de l'algo de Madwick qui se perd)
