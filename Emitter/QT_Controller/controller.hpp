@@ -8,6 +8,7 @@ extern int ButtonB;
 extern int ButtonY;
 extern int ButtonX;
 extern int ButtonXBOX;
+extern int ButtonMENU;
 extern int throttleAxis;
 extern int throttleValue;
 extern int CWRotationTrigger;

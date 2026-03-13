@@ -10,6 +10,7 @@
 #define CODE_BUTTON_B 305
 #define CODE_BUTTON_Y 308
 #define CODE_BUTTON_X 307
+#define CODE_BUTTON_MENU 315
 #define CODE_BUTTON_XBOX 316
 #define CODE_THROTTLE_AXIS 1
 #define CODE_CW_ROTATION_TRIGGER 5
@@ -24,6 +25,7 @@ int ButtonB = 0;
 int ButtonY = 0;
 int ButtonX = 0;
 int ButtonXBOX = 0;
+int ButtonMENU = 0;
 int throttleAxis = 0;
 int throttleValue = 0;
 int CWRotationTrigger = 0;
@@ -151,6 +153,7 @@ void Controller::readController()
                 case CODE_BUTTON_Y: ButtonY = ev.value; break;
                 case CODE_BUTTON_X: ButtonX = ev.value; break;
                 case CODE_BUTTON_XBOX: ButtonXBOX = ev.value; break;
+                case CODE_BUTTON_MENU: ButtonMENU = ev.value; break;
             }
         }
 

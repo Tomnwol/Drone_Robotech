@@ -26,9 +26,9 @@ void checkWiFiConnection(){
         QSignalBlocker blocker(connectToWiFiCheck);
         connectToWiFiCheck->setChecked(true);
         connectToWiFiCheck->setEnabled(false);
-        UDPCheck->setEnabled(true);
+        //UDPCheck->setEnabled(true);
     }else{
-        connectToWiFiCheck->setText("WiFi Not Connected");
+        connectToWiFiCheck->setText("WiFi Not Connected (MENU)");
         QSignalBlocker blocker(connectToWiFiCheck);
         connectToWiFiCheck->setChecked(false);
         connectToWiFiCheck->setEnabled(true);
@@ -44,7 +44,7 @@ void initStartBox(QSerialPort* serial){
     QVBoxLayout *communicationVbox = new QVBoxLayout;
 
     QString connectToWiFi = QString("WiFi Connection");
-    connectToWiFiCheck = new QCheckBox("WiFi Not Connected");
+    connectToWiFiCheck = new QCheckBox("WiFi Not Connected (MENU)");
     connectToWiFiCheck->setStyleSheet(
         CLASSIC_CHECKBOX_STYLE
     );
@@ -96,26 +96,31 @@ void initStartBox(QSerialPort* serial){
             connectToWiFiCheck->setText("WiFi Connected");
         }else{
             connectToWiFiCheck->setChecked(false);
-            connectToWiFiCheck->setText("WiFi Not Connected");
+            connectToWiFiCheck->setText("WiFi Not Connected (MENU)");
         }
         connectToWiFiCheck->setStyleSheet(CLASSIC_CHECKBOX_STYLE);
     });
 
 
     QObject::connect(UDPCheck, &QCheckBox::toggled, [&, serial](bool checked){ // Active la manette et lance la communcation série
-        checked = checked; // no effect, avoid warning
-        controllerGroupBox->setEnabled(true);
-        KS_enable = true;
-        noFocusPID();
-        UDPCheck->setEnabled(false);
-        configure_UDP();
+        if (checked){
+            controllerGroupBox->setEnabled(true);
+            KS_enable = true;
+            noFocusPID();
+            UDPCheck->setEnabled(false);
+            configure_UDP();
+        }
     });
 
     timerUDPActivation = new QTimer();
     timerUDPActivation->setInterval(200); // 20 ms → 50 Hz
 
     QObject::connect(timerUDPActivation, &QTimer::timeout, [controllerFoundCheck]() {
-        if( ButtonXBOX ){
+        if( ButtonMENU ){
+            connectToWiFiCheck->setChecked(true);
+        }
+
+        if( ButtonXBOX && connectToWiFiCheck->isChecked()){
             UDPCheck->setChecked(true);
         }
         controllerFoundCheck->setChecked(isControllerFound);

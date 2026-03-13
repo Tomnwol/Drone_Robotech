@@ -147,10 +147,12 @@ bool is_kill_mode_enable(){ /* Non réversible mode -> désactivation des moteur
   if (killswitch_enable == false){
     if (is_arm_mode_enable && (udp_delta_time > 1000)){ //1500 ! Pour les TESTS ON MET + MAIS ATTENTION A BIEN REMETTRE 1500 PLUS TARD
       killswitch_enable = true;
+      Serial.println("KS -> Communication failed");
       return true;
     }
     if (SWKillSwitch){ // Si la radio a reçu un signal KillSwitch
       killswitch_enable = true;
+      Serial.println("KS -> KS flag received");
       return true;
     }else{
       return false;
@@ -232,6 +234,7 @@ void fc_task() {
         const float SECURITY_ANGLE_RAD = 45.0f * M_PI / 180.0f;
         if (now > TIME_BEFORE_MOTOR_ACTIVATION * 0.8 && (fabs(att.roll) > SECURITY_ANGLE_RAD || fabs(att.pitch) > SECURITY_ANGLE_RAD)){
           killswitch_enable = true;
+          Serial.println("KS -> Security angle");
         }
 
         Euler att_desired = get_att_desired();
@@ -252,9 +255,9 @@ void fc_task() {
     // Vérification de l'armement du drone. Une fois que le drone est armé, ce n'est plus vérfié
     if( !is_arm_mode_enable ){ 
       is_arm_mode_enable = arm_mode_enable();
-      if (debug_counter2 >= 200) {
+      if (debug_counter2 >= 10) {
         debug_counter2 = 0;
-        Serial.printf("%d, %d\n", joyThrottle, udp_delta_time);
+        Serial.printf("DEBUG2:%d, %d\n", joyThrottle, udp_delta_time);
       }
       if (is_arm_mode_enable){ //La LED prévient que le drone a été armé
         digitalWrite(ARM_LED, HIGH);
