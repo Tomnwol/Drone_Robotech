@@ -9,7 +9,7 @@ bool connectWifi(QString ssid)
     QProcess reConnectprocess;
     reConnectprocess.start("nmcli", {"connection","up", ssid});
     int code = 0;
-    if(!reConnectprocess.waitForFinished(1000))  // 3000 ms = 3 s
+    if(!reConnectprocess.waitForFinished(500))  // 3000 ms = 3 s
     {
         //std::cout << "Timeout → killing process" << std::endl;
         reConnectprocess.kill();   // envoie SIGKILL

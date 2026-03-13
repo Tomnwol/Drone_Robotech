@@ -1,3 +1,5 @@
+#include <QDateTime>
+#include <iostream>
 #include "UDP.hpp"
 
 QUdpSocket* udpSocket = nullptr;
@@ -24,6 +26,7 @@ void configure_UDP(){
                     QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint);
 
     timer = new QTimer();
+    timer->setTimerType(Qt::PreciseTimer);
     timer->setInterval(20); // 50Hz
 
     // Buffer réutilisé pour éviter allocations
@@ -74,6 +77,8 @@ void configure_UDP(){
         if (sent != frame.size()) {
             std::cout << "Erreur envoi UDP !" << std::endl;
         }
+        qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
+        std::cout << "[" << timestamp << "] envoi UDP !" << std::endl;
 
     });
 

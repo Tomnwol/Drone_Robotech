@@ -4,6 +4,8 @@
 #include <QString>
 #include <QTimer>
 #include <QCoreApplication>
+#include <QtConcurrent/QtConcurrent>
+#include <QFutureWatcher>
 #include "qtControllerBox.hpp"
 #include "configuration.hpp"
 #include "qtBoxConfiguration.hpp"
@@ -19,8 +21,10 @@ QCheckBox *connectToWiFiCheck = nullptr;
 QCheckBox *UDPCheck = nullptr;
 
 QTimer *timerWiFiVerification = nullptr;
-
-void checkWiFiConnection(){
+QFutureWatcher<QString> *wifiWatcher = nullptr;
+bool wifiCheckInProgress = false;
+/*void checkWiFiConnection(){
+    std::cout << "CHECK CONNECTION BEGIN" << std::endl;
     if (getCurrentWifi() == ESP_SSID){
         connectToWiFiCheck->setText("WiFi Connected");
         QSignalBlocker blocker(connectToWiFiCheck);
@@ -28,6 +32,27 @@ void checkWiFiConnection(){
         connectToWiFiCheck->setEnabled(false);
         //UDPCheck->setEnabled(true);
     }else{
+        connectToWiFiCheck->setText("WiFi Not Connected (MENU)");
+        QSignalBlocker blocker(connectToWiFiCheck);
+        connectToWiFiCheck->setChecked(false);
+        connectToWiFiCheck->setEnabled(true);
+        UDPCheck->setChecked(false);
+        UDPCheck->setEnabled(false);
+    }
+    std::cout << "CHECK CONNECTION END" << std::endl;
+}*/
+
+// Appelée dans le thread principal — met à jour l'UI
+void onWifiCheckFinished() {
+    QString ssid = wifiWatcher->result();
+    wifiCheckInProgress = false;
+
+    if (ssid == ESP_SSID) {
+        connectToWiFiCheck->setText("WiFi Connected");
+        QSignalBlocker blocker(connectToWiFiCheck);
+        connectToWiFiCheck->setChecked(true);
+        connectToWiFiCheck->setEnabled(false);
+    } else {
         connectToWiFiCheck->setText("WiFi Not Connected (MENU)");
         QSignalBlocker blocker(connectToWiFiCheck);
         connectToWiFiCheck->setChecked(false);
@@ -72,15 +97,23 @@ void initStartBox(QSerialPort* serial){
     QVBoxLayout *startVbox = new QVBoxLayout;
     startVbox->addWidget(communicationGroupBox);
     startGroupBox->setLayout(startVbox);
-    checkWiFiConnection();
 
-    timerWiFiVerification = new QTimer();
-    timerWiFiVerification->setInterval(1000);
-    QObject::connect(timerWiFiVerification, &QTimer::timeout, []() {
-        checkWiFiConnection();
+    wifiWatcher = new QFutureWatcher<QString>(nullptr);  // ← plus de this
+    QObject::connect(wifiWatcher, &QFutureWatcher<QString>::finished,
+                     []() { onWifiCheckFinished(); });    // ← plus de this
+
+    timerWiFiVerification = new QTimer(nullptr);          // ← plus de this
+    QObject::connect(timerWiFiVerification, &QTimer::timeout, []() {  // ← plus de this
+        if (!wifiCheckInProgress) {
+            wifiCheckInProgress = true;
+            wifiWatcher->setFuture(QtConcurrent::run(getCurrentWifi));
+        }
     });
-    timerWiFiVerification->start();
 
+    timerWiFiVerification->start();
+    wifiCheckInProgress = true;
+    wifiWatcher->setFuture(QtConcurrent::run(getCurrentWifi));
+    //checkWiFiConnection();
     QObject::connect(connectToWiFiCheck, &QCheckBox::toggled, [&](bool checked){ // Active la manette et lance la communcation série
         connectToWiFiCheck->setText("WiFi Loading");
         connectToWiFiCheck->setStyleSheet(

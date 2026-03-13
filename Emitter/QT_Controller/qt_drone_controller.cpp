@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     controller->initController("Generic X-Box pad");
 
     QTimer* reconnectTimer = new QTimer();
-    reconnectTimer->setInterval(300); // toutes les 1s
+    reconnectTimer->setInterval(500); // toutes les 1s
 
     QObject::connect(reconnectTimer, &QTimer::timeout, [controller]() {
 
