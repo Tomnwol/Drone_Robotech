@@ -153,12 +153,12 @@ void initControllerBox(QWidget* window, Controller* controller){
 
     QObject::connect(rollSlider, &QSlider::valueChanged, [rollLabel](int value){ //Update la valeur de Throttle
         rollLabel->setText("Roll Value : " + QString::number(value));
-        payload.roll = value;  //Update value for UART
+        payload.roll = -value;  //Update value for UART
     });
 
     QObject::connect(pitchSlider, &QSlider::valueChanged, [pitchLabel](int value){ //Update la valeur de Throttle
         pitchLabel->setText("Pitch Value : " + QString::number(value));
-        payload.pitch = value;  //Update value for UART
+        payload.pitch = -value;  //Update value for UART
     });
 
     timerControllerUpdate = new QTimer();
