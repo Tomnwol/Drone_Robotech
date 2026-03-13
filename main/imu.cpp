@@ -131,17 +131,20 @@ Vector3f read_magne() {
 
 #define JOYSTICK_RESOLUTION 1000.0f
 #define MAX_ANGLE_DEGREES 20.0f
+#define YAW_INTENSITY_AMP 50
 Euler get_att_desired(){
     const float MAX_ANGLE_RAD = MAX_ANGLE_DEGREES * M_PI / 180.0f;
     float roll_cmd  = ((float)joyRoll) / JOYSTICK_RESOLUTION;   // [-1 ; +1]
     float pitch_cmd = ((float)joyPitch) / JOYSTICK_RESOLUTION;   // [-1 ; +1]
+    float yaw_cmd = ((float)joyYaw) / JOYSTICK_RESOLUTION;
     // Clamp sécurité
     roll_cmd  = float_clamp(roll_cmd,  -1.0f, 1.0f);
     pitch_cmd = float_clamp(pitch_cmd, -1.0f, 1.0f);
+    yaw_cmd = float_clamp(yaw_cmd, -1.0f, 1.0f);
     // Angle cible
     Euler att_desired;
     att_desired.roll  = roll_cmd  * MAX_ANGLE_RAD;
     att_desired.pitch = pitch_cmd * MAX_ANGLE_RAD;
-    att_desired.yaw   = 0.0f;   // pour l'instant
+    att_desired.yaw   = yaw_cmd * YAW_INTENSITY_AMP;   // pour l'instant
     return att_desired;
 }
