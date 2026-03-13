@@ -195,6 +195,7 @@ void fc_task() {
     static Vector3f omega_set = {0};
     static Vector3f magne_vect = {0, 0, 0};
     static Euler att_telemetry = {0,0,0};
+    static float yawCommand = 0;
     static uint16_t MOT_FL_telemetry = 48;
     static uint16_t MOT_FR_telemetry = 48;
     static uint16_t MOT_BR_telemetry = 48;
@@ -238,7 +239,7 @@ void fc_task() {
         }
 
         Euler att_desired = get_att_desired();
-        //Euler att_desired = {0.0f, 0.0f, 0.0f}; // attitude cible (par ex. à plat)
+        yawCommand = att_desired.yaw;
         omega_set = get_angular_rate_command(att, att_desired);
     }
 
@@ -281,14 +282,15 @@ void fc_task() {
     if(now < TIME_BEFORE_MOTOR_ACTIVATION || is_kill_mode_enable()){ // ATTENTION A BIEN REGLER LA VALEUR DE DELTA RADIO LORS DUN VRAI VOL
       motor_zero = true;
     }
+    //float commandYaw = joyYaw;
     float motor_max_value = get_motor_max_value();
     // Remarque: sur ce montage, l'IMU est orientée de 90°
     // => gyro.x = roulis (roll), gyro.y = tangage (pitch)
     //On peut viser : torque.x, torque.y ∈ [-100, +100] & base_thrust ∈ [100 à 1900]
-    float mFL_target = float_clamp((base_thrust + torque.y - torque.x + uint8_clamp(offsetMotorFL, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
-    float mFR_target = float_clamp((base_thrust + torque.y + torque.x + uint8_clamp(offsetMotorFR, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
-    float mBR_target = float_clamp((base_thrust - torque.y + torque.x + uint8_clamp(offsetMotorBR, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
-    float mBL_target = float_clamp((base_thrust - torque.y - torque.x + uint8_clamp(offsetMotorBL, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
+    float mFL_target = float_clamp((base_thrust + torque.y - torque.x - yawCommand + uint8_clamp(offsetMotorFL, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
+    float mFR_target = float_clamp((base_thrust + torque.y + torque.x + yawCommand + uint8_clamp(offsetMotorFR, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
+    float mBR_target = float_clamp((base_thrust - torque.y + torque.x - yawCommand + uint8_clamp(offsetMotorBR, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
+    float mBL_target = float_clamp((base_thrust - torque.y - torque.x + yawCommand + uint8_clamp(offsetMotorBL, 0, OFFSET_MOTOR_MAX) ), 48.0, motor_max_value);
 
     // Appliquer slew limiter par moteur
     prev_mFL = slew_limit(mFL_target, prev_mFL, MOTOR_SLEW_RATE, dt_inner);
