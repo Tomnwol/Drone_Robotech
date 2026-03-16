@@ -56,7 +56,7 @@ void initConfigurationBox(Config* config){
     QVBoxLayout *vbox_PID = new QVBoxLayout;
     QLabel *kpLabel = new QLabel("Kp:");
     kpSpin = new QDoubleSpinBox();
-    kpSpin->setRange(1.0, 100.0);    // plage de valeurs
+    kpSpin->setRange(1.0, 200.0);    // plage de valeurs
     kpSpin->setSingleStep(0.5);      // incrément à chaque flèche
     kpSpin->setValue(config->Kp);           // valeur par défaut
     kpSpin->setDecimals(2);          // nombre de décimales affichées
@@ -64,7 +64,7 @@ void initConfigurationBox(Config* config){
 
     QLabel *kiLabel = new QLabel("Ki:");
     kiSpin = new QDoubleSpinBox();
-    kiSpin->setRange(0.0, 100.0);    // plage de valeurs
+    kiSpin->setRange(0.0, 400.0);    // plage de valeurs
     kiSpin->setSingleStep(0.5);      // incrément à chaque flèche
     kiSpin->setValue(config->Ki);           // valeur par défaut
     kiSpin->setDecimals(2);          // nombre de décimales affichées
