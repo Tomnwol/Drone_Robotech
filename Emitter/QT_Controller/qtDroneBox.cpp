@@ -176,6 +176,14 @@ void initDroneBox(){
     BR_Slider->setValue(DSHOT_MIN);
     BR_Label->setText("BR Value : " + QString::number(BR_Slider->value()));
 
+    yawSlider->setStyleSheet(SLIDER_STYLE);
+    rollSlider->setStyleSheet(SLIDER_STYLE);
+    pitchSlider->setStyleSheet(SLIDER_STYLE);
+    FL_Slider->setStyleSheet(SLIDER_STYLE);
+    BL_Slider->setStyleSheet(SLIDER_STYLE);
+    FR_Slider->setStyleSheet(SLIDER_STYLE);
+    BR_Slider->setStyleSheet(SLIDER_STYLE);
+
     droneGroupBox = new QGroupBox("Drone");
     droneGroupBox->setStyleSheet(TITLE_LABEL_STYLE);
     droneBatteryLabel = new QLabel("");

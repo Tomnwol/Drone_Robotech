@@ -3,7 +3,9 @@
 #include <QSlider>
 #include <QDoubleSpinBox>
 #include <QPushButton>
+#include <QTimer>
 #include "UDP.hpp"
+#include "controller.hpp"
 #include "configuration.hpp"
 #include "qtBoxConfiguration.hpp"
 #include "qtStyles.hpp"
@@ -15,7 +17,7 @@ QDoubleSpinBox *kiSpin;
 QDoubleSpinBox *kdSpin;
 
 QGroupBox *configurationGroupBox = nullptr; // WARNING : ne pas intialiser en global sinon crash
-
+QTimer *timerConfigurationUpdate = nullptr;
 void initConfigurationBox(Config* config){
     configurationGroupBox = new QGroupBox("Configuration");
     configurationGroupBox->setStyleSheet(TITLE_LABEL_STYLE);
@@ -27,14 +29,14 @@ void initConfigurationBox(Config* config){
     OM_FL_Slider->setRange(0, OFFSET_MOTOR_MAX);
     OM_FL_Slider->setValue(my_config.offsetMotorFL);
     payload.offsetMotorFL = 0;
-    OM_FL_Label->setText("OM_FL Value : " + QString::number(OM_FL_Slider->value()));
+    OM_FL_Label->setText("FrontLeft : " + QString::number(OM_FL_Slider->value()));
 
     QLabel *OM_BL_Label = new QLabel("");
     QSlider *OM_BL_Slider = new QSlider(Qt::Horizontal);
     OM_BL_Slider->setRange(0, OFFSET_MOTOR_MAX);
     OM_BL_Slider->setValue(my_config.offsetMotorBL);
     payload.offsetMotorBL = 0;
-    OM_BL_Label->setText("OM_BL Value : " + QString::number(OM_BL_Slider->value()));
+    OM_BL_Label->setText("BackLeft : " + QString::number(OM_BL_Slider->value()));
 
     /****3.Right offset****/
     QLabel *OM_FR_Label = new QLabel("");
@@ -42,14 +44,14 @@ void initConfigurationBox(Config* config){
     OM_FR_Slider->setRange(0, OFFSET_MOTOR_MAX);
     OM_FR_Slider->setValue(my_config.offsetMotorFR);
     payload.offsetMotorFR = 0;
-    OM_FR_Label->setText("OM_FR Value : " + QString::number(OM_FR_Slider->value()));
+    OM_FR_Label->setText("FrontRight : " + QString::number(OM_FR_Slider->value()));
 
     QLabel *OM_BR_Label = new QLabel("");
     QSlider *OM_BR_Slider = new QSlider(Qt::Horizontal);
     OM_BR_Slider->setRange(0, OFFSET_MOTOR_MAX);
     OM_BR_Slider->setValue(my_config.offsetMotorBR);
     payload.offsetMotorBR = 0;
-    OM_BR_Label->setText("OM_BR Value : " + QString::number(OM_BR_Slider->value()));
+    OM_BR_Label->setText("BackRight : " + QString::number(OM_BR_Slider->value()));
 
     /***2.Configuration->PID SpinBox***/
     QGroupBox *PID_GroupBox = new QGroupBox("PID Values");
@@ -160,29 +162,55 @@ void initConfigurationBox(Config* config){
 
     /*Update OFFSETS*/
     QObject::connect(OM_FL_Slider, &QSlider::valueChanged, [OM_FL_Label](int value){
-        OM_FL_Label->setText("OM_FL Value : " + QString::number(value));
+        OM_FL_Label->setText("FrontLeft : " + QString::number(value));
         my_config.offsetMotorFL = value;
         payload.offsetMotorFL = value;  //Update value for UART
     });
 
     QObject::connect(OM_BL_Slider, &QSlider::valueChanged, [OM_BL_Label](int value){
-        OM_BL_Label->setText("OM_BL Value : " + QString::number(value));
+        OM_BL_Label->setText("BackLeft : " + QString::number(value));
         my_config.offsetMotorBL = value;
         payload.offsetMotorBL = value;  //Update value for UART
     });
 
     QObject::connect(OM_FR_Slider, &QSlider::valueChanged, [OM_FR_Label](int value){
-        OM_FR_Label->setText("OM_FR Value : " + QString::number(value));
+        OM_FR_Label->setText("FrontRight : " + QString::number(value));
         my_config.offsetMotorFR = value;
         payload.offsetMotorFR = value;  //Update value for UART
     });
 
     QObject::connect(OM_BR_Slider, &QSlider::valueChanged, [OM_BR_Label](int value){
-        OM_BR_Label->setText("OM_BR Value : " + QString::number(value));
+        OM_BR_Label->setText("BackRight : " + QString::number(value));
         my_config.offsetMotorBR = value;
         payload.offsetMotorBR = value;  //Update value for UART
     });
 
+    timerConfigurationUpdate = new QTimer();
+    timerConfigurationUpdate->setInterval(130);
+
+    QObject::connect(timerConfigurationUpdate, &QTimer::timeout, []() {
+        switch(valueMenu){
+            case 0:
+                kpSpin->setValue( kpSpin->value() + ButtonBackRight - ButtonBackLeft );
+                kpSpin->setStyleSheet(FOCUS_PID_STYLE);
+                kiSpin->setStyleSheet(NORMAL_PID_STYLE);
+                kdSpin->setStyleSheet(NORMAL_PID_STYLE);
+                break;
+            case 1:
+                kiSpin->setValue( kiSpin->value() + ButtonBackRight - ButtonBackLeft );
+                kpSpin->setStyleSheet(NORMAL_PID_STYLE);
+                kiSpin->setStyleSheet(FOCUS_PID_STYLE);
+                kdSpin->setStyleSheet(NORMAL_PID_STYLE);
+                break;
+            case 2:
+                kdSpin->setValue( kdSpin->value() + ButtonBackRight - ButtonBackLeft );
+                kpSpin->setStyleSheet(NORMAL_PID_STYLE);
+                kiSpin->setStyleSheet(NORMAL_PID_STYLE);
+                kdSpin->setStyleSheet(FOCUS_PID_STYLE);
+                break;
+        }
+    });
+    timerConfigurationUpdate->start();
 
 }
 

@@ -12,6 +12,9 @@
 #define CODE_BUTTON_X 307
 #define CODE_BUTTON_MENU 315
 #define CODE_BUTTON_XBOX 316
+#define CODE_BUTTON_BACKLEFT 310
+#define CODE_BUTTON_BACKRIGHT 311
+#define CODE_VERTICAL_AXIS  17
 #define CODE_THROTTLE_AXIS 1
 #define CODE_CW_ROTATION_TRIGGER 5
 #define CODE_CCW_ROTATION_TRIGGER 2
@@ -19,19 +22,24 @@
 #define CODE_ROLL_AXIS 3
 
 #define JOYSTICK_RESOLUTION 1000
-
+#define MENU_SIZE 3
 int ButtonA = 0;
 int ButtonB = 0;
 int ButtonY = 0;
 int ButtonX = 0;
-int ButtonXBOX = 0;
 int ButtonMENU = 0;
+int ButtonXBOX = 0;
+int ButtonBackLeft = 0;
+int ButtonBackRight = 0;
+
 int throttleAxis = 0;
 int throttleValue = 0;
 int CWRotationTrigger = 0;
 int CCWRotationTrigger = 0;
 int pitchAxis = 0;
 int rollAxis = 0;
+
+int valueMenu = 0;
 
 bool isControllerFound = false;
 
@@ -146,6 +154,7 @@ void Controller::readController()
 
         if (ev.type == EV_KEY)
         {
+
             switch(ev.code)
             {
                 case CODE_BUTTON_A: ButtonA = ev.value; break;
@@ -154,6 +163,8 @@ void Controller::readController()
                 case CODE_BUTTON_X: ButtonX = ev.value; break;
                 case CODE_BUTTON_XBOX: ButtonXBOX = ev.value; break;
                 case CODE_BUTTON_MENU: ButtonMENU = ev.value; break;
+                case CODE_BUTTON_BACKLEFT: ButtonBackLeft = ev.value; break;
+                case CODE_BUTTON_BACKRIGHT: ButtonBackRight = ev.value; break;
             }
         }
 
@@ -180,6 +191,13 @@ void Controller::readController()
 
                 case CODE_ROLL_AXIS:
                     rollAxis = remapInt(ev.value, -32768, 32767, -JOYSTICK_RESOLUTION, JOYSTICK_RESOLUTION);
+                    break;
+                case CODE_VERTICAL_AXIS:
+                    int tmpValue = valueMenu + ev.value;
+                    if (tmpValue < 0){
+                        tmpValue = MENU_SIZE-1;
+                    }
+                    valueMenu = (tmpValue)%(MENU_SIZE);
                     break;
             }
         }

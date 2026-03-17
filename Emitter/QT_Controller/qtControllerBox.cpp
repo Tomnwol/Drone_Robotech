@@ -62,6 +62,11 @@ void initControllerBox(QWidget* window, Controller* controller){
     QSlider *rollSlider = new QSlider(Qt::Horizontal);
     QSlider *pitchSlider = new QSlider(Qt::Horizontal);
 
+    throttleSlider->setStyleSheet(SLIDER_STYLE);
+    yawSlider->setStyleSheet(SLIDER_STYLE);
+    rollSlider->setStyleSheet(SLIDER_STYLE);
+    pitchSlider->setStyleSheet(SLIDER_STYLE);
+
     throttleSlider->setRange(DSHOT_MIN, DSHOT_MAX);
     throttleSlider->setValue(DSHOT_MIN);
     yawSlider->setRange(-ANGLE_MAX, +ANGLE_MAX);

@@ -9,12 +9,16 @@ extern int ButtonY;
 extern int ButtonX;
 extern int ButtonXBOX;
 extern int ButtonMENU;
+extern int ButtonBackLeft;
+extern int ButtonBackRight;
 extern int throttleAxis;
 extern int throttleValue;
 extern int CWRotationTrigger;
 extern int CCWRotationTrigger;
 extern int pitchAxis;
 extern int rollAxis;
+
+extern int valueMenu;
 
 extern bool isControllerFound;
 int clampInt(int value, int min, int max);
