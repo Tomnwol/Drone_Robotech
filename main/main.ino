@@ -326,9 +326,10 @@ void fc_task() {
     if (debug_counter >= 200) {
         debug_counter = 0;
         //Afficher également les commandes Moteur1,2,3,4////////////////////////////////////////////////////
-        Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
+        //Serial.printf("%f,%f,%f,%f,%d,%d,%d,%d\n", q_drone.w, q_drone.x, q_drone.y, q_drone.z,MOT_FL,MOT_FR,MOT_BL,MOT_BR );
         
     }
+    delay(1);
 }
 
 
@@ -341,6 +342,7 @@ void setup() {
     digitalWrite(GP_LED, LOW);
     digitalWrite(ARM_LED, LOW);
     i2c_master_init(I2C_MASTER_0_PORT, I2C_MASTER_0_SDA_IO, I2C_MASTER_0_SCL_IO, I2C_MASTER_0_FREQ_HZ);
+    setupUDP();
     calibrate_gyro();
     delay(100);
     motorFL.begin();
@@ -348,8 +350,7 @@ void setup() {
     motorBL.begin();
     motorBR.begin();
     motor_initial_sequence();
-    delay(50); //JTAG Delay test
-    setupUDP();
+    delay(5); //JTAG Delay test
 }
 
 

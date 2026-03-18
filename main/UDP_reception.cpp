@@ -33,7 +33,9 @@ IPAddress pcIP;
 uint16_t pcPort = 0;
 
 void setupUDP() {
-    WiFi.softAP(ssid, password);
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(ssid, password, 6);  // canal fixe
+    WiFi.setSleep(false);            // désactive power save
     Serial.print("IP ESP32 : ");
     Serial.println(WiFi.softAPIP());
 
@@ -103,14 +105,33 @@ void handleSendTelemetry(Euler att_telemetry, uint16_t MOT_FL_telemetry, uint16_
 
 
 
-
-
 void readUDPData() {
+
     udp_delta_time = millis() - udp_last_time;
-    int packetSize = udp.parsePacket();
-    if (packetSize == 22) { // on attend 22 octets
+
+    int packetSize;
+    uint8_t lastPayload[22];
+    bool newPacket = false;
+
+    while ((packetSize = udp.parsePacket()) > 0) {
+
+        if (packetSize == 22) {
+
+            udp.read(lastPayload, 22);
+            newPacket = true;
+
+        } else {
+            udp.flush();
+        }
+    }
+
+    // Après avoir vidé le buffer → on utilise uniquement le dernier
+    if (newPacket) {
+
         udp_last_time = millis();
-        udp.read(payload, 22);
+
+        memcpy(payload, lastPayload, 22);
+
         pcIP = udp.remoteIP();
         pcPort = udp.remotePort();
 
@@ -124,16 +145,10 @@ void readUDPData() {
         QT_KP       = ((float)(uint16_t)(payload[12] + (payload[13]<<8))/100.0);
         QT_KI       = ((float)(uint16_t)(payload[14] + (payload[15]<<8))/100.0);
         QT_KD       = ((float)(uint16_t)(payload[16] + (payload[17]<<8))/100.0);
+
         offsetMotorFL = payload[18];
         offsetMotorFR = payload[19];
         offsetMotorBL = payload[20];
         offsetMotorBR = payload[21];
-
-        // Debug
-        /*Serial.print("Throttle : "); Serial.println(joyThrottle);
-        Serial.print("Yaw : "); Serial.println(joyYaw);
-        Serial.print("Roll : "); Serial.println(joyRoll);
-        Serial.print("Pitch : "); Serial.println(joyPitch);
-        Serial.print("QT_KI : "); Serial.println(QT_KI);*/
     }
 }
