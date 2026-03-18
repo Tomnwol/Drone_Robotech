@@ -164,7 +164,7 @@ void initControllerBox(QWidget* window, Controller* controller){
     });
 
     timerControllerUpdate = new QTimer();
-    timerControllerUpdate->setInterval(20); // 20 ms → 50 Hz
+    timerControllerUpdate->setInterval(50); // 20 ms → 50 Hz
 
     QObject::connect(timerControllerUpdate, &QTimer::timeout, [throttleSlider, yawSlider, rollSlider, pitchSlider, killCheck, FS_Check]() {
         throttleValue += throttleAxis;

@@ -43,6 +43,10 @@ int valueMenu = 0;
 
 bool isControllerFound = false;
 
+double easeInCirc(double x) {
+    return x == 0 ? 0 : pow(2, 10 * x - 10);
+}
+
 int remapInt(int value, int inMin, int inMax, int outMin, int outMax) {
     if (inMax == inMin) return outMin; // éviter division par zéro
     return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
@@ -174,7 +178,11 @@ void Controller::readController()
             {
                 case CODE_THROTTLE_AXIS:
                     throttleAxis = remapInt(-ev.value, -32768, 32767, -1000, 1000);
-                    throttleAxis = (abs(throttleAxis) * throttleAxis) / 15000;
+                    if (throttleAxis){
+                        //std::cout << throttleAxis << " , ";
+                        throttleAxis = (throttleAxis/abs(throttleAxis)) * (int)200*easeInCirc(double(abs(throttleAxis))/1000.0);
+                        //std::cout << throttleAxis << std::endl;
+                    }
                     break;
 
                 case CODE_CW_ROTATION_TRIGGER:
