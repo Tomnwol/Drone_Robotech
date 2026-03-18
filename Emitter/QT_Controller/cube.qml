@@ -5,11 +5,22 @@ Item {
     width: 200
     height: 200
 
+    // Contour
+    Rectangle {
+        anchors.fill: parent
+        color: "transparent"      // fond transparent
+        border.color: "#434c5e"   // couleur du contour
+        border.width: 2
+        radius: 4                 // arrondi facultatif
+        z: 1                      // pour que le border soit au-dessus si nécessaire
+    }
+
     View3D {
         anchors.fill: parent
-
+        z: 0  // en dessous du border
         environment: SceneEnvironment {
             backgroundMode: SceneEnvironment.Color
+
             clearColor: "#303030"
         }
 
@@ -36,7 +47,7 @@ Item {
             eulerRotation.z: roll
 
             materials: DefaultMaterial {
-                diffuseColor: "blue"
+                diffuseColor: "#5E85B5"
             }
         }
     }

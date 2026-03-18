@@ -53,6 +53,11 @@ void initConfigurationBox(Config* config){
     payload.offsetMotorBR = 0;
     OM_BR_Label->setText("BackRight : " + QString::number(OM_BR_Slider->value()));
 
+    OM_FL_Slider->setStyleSheet(SLIDER_STYLE);
+    OM_BL_Slider->setStyleSheet(SLIDER_STYLE);
+    OM_FR_Slider->setStyleSheet(SLIDER_STYLE);
+    OM_BR_Slider->setStyleSheet(SLIDER_STYLE);
+
     /***2.Configuration->PID SpinBox***/
     QGroupBox *PID_GroupBox = new QGroupBox("PID Values");
     QVBoxLayout *vbox_PID = new QVBoxLayout;
@@ -113,6 +118,8 @@ void initConfigurationBox(Config* config){
 
     offsetsMotorsGroupBox->setLayout(offsetsMotorsHbox);
 
+
+
     /***2.Configuration->SaveParameters***/
     QGroupBox *saveGroupBox = new QGroupBox("Save Config");
     QVBoxLayout *saveVBox = new QVBoxLayout;
@@ -125,9 +132,9 @@ void initConfigurationBox(Config* config){
     //QGroupBox *configurationGroupBox = new QGroupBox("Configuration");
     QVBoxLayout *configurationVbox = new QVBoxLayout;
 
-    PID_GroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
-    offsetsMotorsGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
-    saveGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    //PID_GroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    //offsetsMotorsGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    //saveGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
 
     configurationVbox->addWidget(PID_GroupBox);
     configurationVbox->addWidget(offsetsMotorsGroupBox);

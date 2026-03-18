@@ -18,7 +18,7 @@ QObject *root = nullptr;
 #define HEIGHT_BATTERY_CELL 5 //px
 
 #define BATTERY_NO_DATA "#333333"
-#define EMPTY_CELL_COLOR "#bbbbbb"
+#define EMPTY_CELL_COLOR MAIN_BACKGROUND
 
 #define BATTERY_FULL_COLOR "#54D651"
 #define BATTERY_OK_COLOR "#82D651"
@@ -62,14 +62,14 @@ void updateColorCells(uint8_t value) {
 
     for(int i = 0; i < BATTERY_CELL_COUNT; i++) {
         if (value > 100){
-            droneBatteryCells[i]->setStyleSheet("background-color: " + QString(BATTERY_NO_DATA) + ";");
+            droneBatteryCells[i]->setStyleSheet("background-color: " + QString(BATTERY_NO_DATA) + "; border: 1px solid #425266;");
             continue;
         }
         // Remplissage depuis le bas
         if(i >= BATTERY_CELL_COUNT - activeCells) {
-            droneBatteryCells[i]->setStyleSheet("background-color: " + current_color + ";");
+            droneBatteryCells[i]->setStyleSheet("background-color: " + current_color + "; border: 1px solid #425266;");
         } else {
-            droneBatteryCells[i]->setStyleSheet("background-color: " + QString(EMPTY_CELL_COLOR) + ";");
+            droneBatteryCells[i]->setStyleSheet("background-color: " + QString(EMPTY_CELL_COLOR) + "; border: 1px solid #425266;");
         }
     }
 }
@@ -79,7 +79,7 @@ void updateValueLabel(QLabel *batteryLabel, uint8_t value) {
     if (value <= 100){
         batteryLabel->setText("Battery % : " + QString::number(value));
     }else{
-        batteryLabel->setText("--NO DATA--");
+        batteryLabel->setText("Not Connected");
     }
 
 }
@@ -189,9 +189,12 @@ void initDroneBox(){
     droneBatteryLabel = new QLabel("");
 
     QVBoxLayout *droneVbox = new QVBoxLayout;
-    droneVbox->addWidget(droneBatteryLabel);
+
 
     // Création des cellules
+    QGroupBox *batteryGroupBox = new QGroupBox("Battery");
+    QVBoxLayout *batteryVbox = new QVBoxLayout;
+    batteryVbox->addWidget(droneBatteryLabel);
     for(int i = 0; i < BATTERY_CELL_COUNT; i++) {
 
         droneBatteryCells[i] = new QWidget();
@@ -200,9 +203,9 @@ void initDroneBox(){
         droneBatteryCells[i]->setFixedHeight(20);
         droneBatteryCells[i]->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-        droneVbox->addWidget(droneBatteryCells[i]);
+        batteryVbox->addWidget(droneBatteryCells[i]);
     }
-
+    batteryGroupBox->setLayout(batteryVbox);
     //updateDroneBox();
     updateTimer = new QTimer();
     updateTimer->setInterval(50); // 100 ms → 20 Hz
@@ -236,7 +239,7 @@ void initDroneBox(){
     MotorsHbox->addWidget(MotorsGroupBoxRight);
 
     MotorsGroupBox->setLayout(MotorsHbox);
-    droneVbox->addWidget(MotorsGroupBox);
+
     //droneVbox->addWidget(attitudePBGroupBox);
 
     /*  3D */
@@ -251,13 +254,16 @@ void initDroneBox(){
 
     root = quickWidget->rootObject();
 
-    MotorsGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
-    attitudesGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    //MotorsGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    //attitudesGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
 
     MotorsGroupBox->setEnabled(false);
     attitudesGroupBox->setEnabled(false);
 
+    droneVbox->addWidget(batteryGroupBox);
+    droneVbox->addWidget(MotorsGroupBox);
     droneVbox->addWidget(attitudesGroupBox);
+
     //droneGroupBox->setLayout(MotorsHbox);
     droneGroupBox->setLayout(droneVbox);
 

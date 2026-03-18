@@ -23,6 +23,7 @@
 #include "qtBoxConfiguration.hpp"
 #include "qtControllerBox.hpp"
 #include "qtDroneBox.hpp"
+#include "qtStyles.hpp"
 class NoKeyboardSpinBox : public QDoubleSpinBox {
 public:
     using QDoubleSpinBox::QDoubleSpinBox;
@@ -44,6 +45,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
     QApplication app(argc, argv);
     QWidget window;
+    window.resize(1500, 600);
     QSerialPort* serial = new QSerialPort(&window);
     window.setWindowTitle("Drone Controller Interface");
     QVBoxLayout layout;
@@ -78,6 +80,7 @@ int main(int argc, char *argv[])
     mainHBox->addWidget(controllerGroupBox);
     mainHBox->addWidget(droneGroupBox);
     mainGroupBox->setLayout(mainHBox);
+    app.setStyleSheet(APP_STYLE);
 
     /* Display */
     layout.addWidget(mainGroupBox);

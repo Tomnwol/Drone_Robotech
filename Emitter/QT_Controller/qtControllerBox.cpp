@@ -86,16 +86,13 @@ void initControllerBox(QWidget* window, Controller* controller){
     pitchLabel->setText("Pitch Value : " + QString::number(pitchSlider->value()));
     motorsVbox->addWidget(throttleLabel);
     motorsVbox->addWidget(throttleSlider);
-    motorsVbox->addWidget(yawLabel);
-    motorsVbox->addWidget(yawSlider);
-    motorsVbox->addWidget(rollLabel);
-    motorsVbox->addWidget(rollSlider);
     motorsVbox->addWidget(pitchLabel);
     motorsVbox->addWidget(pitchSlider);
+    motorsVbox->addWidget(rollLabel);
+    motorsVbox->addWidget(rollSlider);
+    motorsVbox->addWidget(yawLabel);
+    motorsVbox->addWidget(yawSlider);
     motorsGroupBox->setLayout(motorsVbox);
-
-
-
 
     /**1.Controller**/
     controllerGroupBox = new QGroupBox("Controller");
@@ -103,8 +100,8 @@ void initControllerBox(QWidget* window, Controller* controller){
     controllerGroupBox->setEnabled(false); // Control non disponible tant que le serial n'est pas activé
     QVBoxLayout *controllerVbox = new QVBoxLayout;
 
-    motorsGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
-    securityGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    //motorsGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    //securityGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
     controllerVbox->addWidget(motorsGroupBox);
     controllerVbox->addWidget(securityGroupBox);
     controllerGroupBox->setLayout(controllerVbox);

@@ -65,7 +65,7 @@ void onWifiCheckFinished() {
 void initStartBox(QSerialPort* serial){
     /***2.Communication***/
     QGroupBox *communicationGroupBox = new QGroupBox("Communication");
-    communicationGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
+    //communicationGroupBox->setStyleSheet(NORMAL_LABEL_STYLE);
     QVBoxLayout *communicationVbox = new QVBoxLayout;
 
     QString connectToWiFi = QString("WiFi Connection");
