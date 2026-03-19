@@ -1,5 +1,15 @@
 #include "qtStyles.hpp"
 
+QString LABEL_CONTROL_STYLE = QString(R"(
+    QLabel {
+    color: %1;
+    font-size: 30px;
+    margin-bottom: 4px;
+    }
+)").arg(TEXT_COLOR);
+
+
+
 QString FOCUS_PID_STYLE = QString(R"(
 QDoubleSpinBox {
     background-color: %1;
@@ -7,6 +17,7 @@ QDoubleSpinBox {
     border: 1px solid %3;
     border-radius: 6px;
     padding: 6px 10px;
+    font-size: 26px;
 }
 QDoubleSpinBox::up-button,
 QDoubleSpinBox::down-button {
@@ -24,6 +35,7 @@ QDoubleSpinBox {
     border-radius: 6px;
     padding: 6px 10px;
     min-height: 24px;
+    font-size: 26px;
 }
 
 /* boutons up/down */

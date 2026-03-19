@@ -15,9 +15,10 @@
 #define CODE_BUTTON_BACKLEFT 310
 #define CODE_BUTTON_BACKRIGHT 311
 #define CODE_VERTICAL_AXIS  17
+#define CODE_YAW_AXIS 0
 #define CODE_THROTTLE_AXIS 1
-#define CODE_CW_ROTATION_TRIGGER 5
-#define CODE_CCW_ROTATION_TRIGGER 2
+#define CODE_LEFT_TRIGGER 2
+#define CODE_RIGHT_TRIGGER 5
 #define CODE_PITCH_AXIS 4
 #define CODE_ROLL_AXIS 3
 
@@ -32,10 +33,11 @@ int ButtonXBOX = 0;
 int ButtonBackLeft = 0;
 int ButtonBackRight = 0;
 
-int throttleAxis = 0;
-int throttleValue = 0;
-int CWRotationTrigger = 0;
-int CCWRotationTrigger = 0;
+double throttleAxis = 0;
+double throttleValue = 0;
+int yawAxis = 0;
+int LeftTrigger = 0;
+int RightTrigger = 0;
 int pitchAxis = 0;
 int rollAxis = 0;
 
@@ -52,8 +54,18 @@ int remapInt(int value, int inMin, int inMax, int outMin, int outMax) {
     return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 }
 
+double remapDouble(double value, double inMin, double inMax, double outMin, double outMax) {
+    if (inMax == inMin) return outMin; // éviter division par zéro
+    return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+}
 
 int clampInt(int value, int min, int max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
+
+double clampDouble(double value, double min, double max) {
     if (value < min) return min;
     if (value > max) return max;
     return value;
@@ -177,20 +189,29 @@ void Controller::readController()
             switch(ev.code)
             {
                 case CODE_THROTTLE_AXIS:
-                    throttleAxis = remapInt(-ev.value, -32768, 32767, -1000, 1000);
+                    //throttleAxis = remapInt(-ev.value, -32768, 32767, -1000, 1000);
+                    throttleAxis = -ev.value;
+                    if (fabs(throttleAxis) <= 20){
+                        throttleAxis = 0;
+                    }
                     if (throttleAxis){
-                        //std::cout << throttleAxis << " , ";
-                        throttleAxis = (throttleAxis/abs(throttleAxis)) * (int)200*easeInCirc(double(abs(throttleAxis))/1000.0);
+                        //std::cout << -ev.value << " , ";
+                        throttleAxis = (throttleAxis/fabs(throttleAxis)) * 40 * easeInCirc(double(fabs(throttleAxis))/32768.0);
                         //std::cout << throttleAxis << std::endl;
                     }
                     break;
-
-                case CODE_CW_ROTATION_TRIGGER:
-                    CWRotationTrigger = remapInt(ev.value, 0, 1023, 0, JOYSTICK_RESOLUTION);
+                case CODE_YAW_AXIS:{
+                    double tmpYaw = remapDouble(ev.value, -32768, 32767, -1.0, 1.0);
+                    tmpYaw = (tmpYaw/fabs(tmpYaw)) * easeInCirc(fabs(tmpYaw)) * 1000;
+                    yawAxis = (int)tmpYaw;
+                    break;
+                }
+                case CODE_LEFT_TRIGGER:
+                    LeftTrigger = remapInt(ev.value, 0, 1023, 0, JOYSTICK_RESOLUTION);
                     break;
 
-                case CODE_CCW_ROTATION_TRIGGER:
-                    CCWRotationTrigger = remapInt(ev.value, 0, 1023, 0, JOYSTICK_RESOLUTION);
+                case CODE_RIGHT_TRIGGER:
+                    RightTrigger = remapInt(ev.value, 0, 1023, 0, 60);
                     break;
 
                 case CODE_PITCH_AXIS:

@@ -83,6 +83,7 @@ void initConfigurationBox(Config* config){
     kdSpin->setSingleStep(0.5);      // incrément à chaque flèche
     kdSpin->setValue(config->Kd);           // valeur par défaut
     kdSpin->setDecimals(2);          // nombre de décimales affichées
+
     payload.KD = config->Kd * PID_MULTIPLICATOR;
 
     vbox_PID->addWidget(kpLabel);
@@ -117,8 +118,6 @@ void initConfigurationBox(Config* config){
     offsetsMotorsHbox->addWidget(offsetsMotorsGroupBoxRight);
 
     offsetsMotorsGroupBox->setLayout(offsetsMotorsHbox);
-
-
 
     /***2.Configuration->SaveParameters***/
     QGroupBox *saveGroupBox = new QGroupBox("Save Config");

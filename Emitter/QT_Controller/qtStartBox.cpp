@@ -146,7 +146,7 @@ void initStartBox(QSerialPort* serial){
     });
 
     timerUDPActivation = new QTimer();
-    timerUDPActivation->setInterval(200); // 20 ms → 50 Hz
+    timerUDPActivation->setInterval(200);
 
     QObject::connect(timerUDPActivation, &QTimer::timeout, [controllerFoundCheck]() {
         if( ButtonMENU ){

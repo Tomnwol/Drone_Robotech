@@ -17,7 +17,7 @@
 
 #define DSHOT_MIN 48
 #define DSHOT_MAX 2047
-
+#define DSHOT_MAX_FAILSAFE 700
 #define ANGLE_MAX 1000  // (yaw/pitch/roll)
 
 Controller* local_controller;
@@ -62,13 +62,17 @@ void initControllerBox(QWidget* window, Controller* controller){
     QSlider *rollSlider = new QSlider(Qt::Horizontal);
     QSlider *pitchSlider = new QSlider(Qt::Horizontal);
 
+    if (FS_Check->isChecked()){
+        throttleSlider->setRange(DSHOT_MIN, DSHOT_MAX_FAILSAFE);
+        throttleValue = clampDouble(throttleValue, DSHOT_MIN, DSHOT_MAX_FAILSAFE);
+    }else{
+        throttleSlider->setRange(DSHOT_MIN, DSHOT_MAX);
+    }
+    throttleSlider->setValue(DSHOT_MIN);
     throttleSlider->setStyleSheet(SLIDER_STYLE);
     yawSlider->setStyleSheet(SLIDER_STYLE);
     rollSlider->setStyleSheet(SLIDER_STYLE);
     pitchSlider->setStyleSheet(SLIDER_STYLE);
-
-    throttleSlider->setRange(DSHOT_MIN, DSHOT_MAX);
-    throttleSlider->setValue(DSHOT_MIN);
     yawSlider->setRange(-ANGLE_MAX, +ANGLE_MAX);
     yawSlider->setValue(0);
     rollSlider->setRange(-ANGLE_MAX, +ANGLE_MAX);
@@ -80,10 +84,10 @@ void initControllerBox(QWidget* window, Controller* controller){
     payload.roll = 0;
     payload.pitch = 0;
     payload.throttle = DSHOT_MIN;
-    throttleLabel->setText("Throttle Value : " + QString::number(throttleSlider->value()));
-    yawLabel->setText("Yaw Value : " + QString::number(yawSlider->value()));
-    rollLabel->setText("Roll Value : " + QString::number(rollSlider->value()));
-    pitchLabel->setText("Pitch Value : " + QString::number(pitchSlider->value()));
+    throttleLabel->setText("Throttle : " + QString::number(throttleSlider->value()));
+    yawLabel->setText("Yaw : " + QString::number(yawSlider->value()));
+    rollLabel->setText("Roll : " + QString::number(rollSlider->value()));
+    pitchLabel->setText("Pitch : " + QString::number(pitchSlider->value()));
     motorsVbox->addWidget(throttleLabel);
     motorsVbox->addWidget(throttleSlider);
     motorsVbox->addWidget(pitchLabel);
@@ -93,6 +97,10 @@ void initControllerBox(QWidget* window, Controller* controller){
     motorsVbox->addWidget(yawLabel);
     motorsVbox->addWidget(yawSlider);
     motorsGroupBox->setLayout(motorsVbox);
+    throttleLabel->setStyleSheet(LABEL_CONTROL_STYLE);
+    pitchLabel->setStyleSheet(LABEL_CONTROL_STYLE);
+    rollLabel->setStyleSheet(LABEL_CONTROL_STYLE);
+    yawLabel->setStyleSheet(LABEL_CONTROL_STYLE);
 
     /**1.Controller**/
     controllerGroupBox = new QGroupBox("Controller");
@@ -108,17 +116,29 @@ void initControllerBox(QWidget* window, Controller* controller){
 
 
     QShortcut *FS_Shortcut = new QShortcut(QKeySequence(Qt::Key_F), window);
-    QObject::connect(FS_Shortcut, &QShortcut::activated, FS_Check, [FS_Check]() { //Active/Désactive la limitation moteur (côté drone)
+    QObject::connect(FS_Shortcut, &QShortcut::activated, FS_Check, [FS_Check, throttleSlider]() { //Active/Désactive la limitation moteur (côté drone)
+        if (not FS_Check->isChecked()){
+            throttleSlider->setRange(DSHOT_MIN, DSHOT_MAX_FAILSAFE);
+            throttleValue = clampDouble(throttleValue, DSHOT_MIN, DSHOT_MAX_FAILSAFE);
+        }else{
+            throttleSlider->setRange(DSHOT_MIN, DSHOT_MAX);
+        }
         QSignalBlocker blocker(FS_Check);
         FS_Check->setChecked(not FS_Check->isChecked());
         payload.failSafeSwitch = FS_Check->isChecked(); //Update value for UART
 
     });
-    QObject::connect(FS_Check, &QCheckBox::toggled, FS_Check, [FS_Check](bool checked) {
+    QObject::connect(FS_Check, &QCheckBox::toggled, FS_Check, [FS_Check, throttleSlider](bool checked) {
         // Cette lambda est appelée à chaque clic sur la checkbox
+        if (checked){
+            throttleSlider->setRange(DSHOT_MIN, DSHOT_MAX_FAILSAFE);
+            throttleValue = clampDouble(throttleValue, DSHOT_MIN, DSHOT_MAX_FAILSAFE);
+        }else{
+            throttleSlider->setRange(DSHOT_MIN, DSHOT_MAX);
+        }
+
         QSignalBlocker blocker(FS_Check);
         payload.failSafeSwitch = checked;
-
     });
 
 
@@ -144,22 +164,22 @@ void initControllerBox(QWidget* window, Controller* controller){
     });
 
     QObject::connect(throttleSlider, &QSlider::valueChanged, [throttleLabel](int value){ //Update la valeur de Throttle
-        throttleLabel->setText("Throttle Value : " + QString::number(value));
+        throttleLabel->setText("Throttle : " + QString::number(value));
         payload.throttle = value;  //Update value for UART
     });
 
     QObject::connect(yawSlider, &QSlider::valueChanged, [yawLabel](int value){ //Update la valeur de Throttle
-        yawLabel->setText("Yaw Value : " + QString::number(value));
+        yawLabel->setText("Yaw : " + QString::number(value));
         payload.yaw = value;  //Update value for UART
     });
 
     QObject::connect(rollSlider, &QSlider::valueChanged, [rollLabel](int value){ //Update la valeur de Throttle
-        rollLabel->setText("Roll Value : " + QString::number(value));
+        rollLabel->setText("Roll : " + QString::number(value));
         payload.roll = -value;  //Update value for UART
     });
 
     QObject::connect(pitchSlider, &QSlider::valueChanged, [pitchLabel](int value){ //Update la valeur de Throttle
-        pitchLabel->setText("Pitch Value : " + QString::number(value));
+        pitchLabel->setText("Pitch : " + QString::number(value));
         payload.pitch = -value;  //Update value for UART
     });
 
@@ -168,15 +188,16 @@ void initControllerBox(QWidget* window, Controller* controller){
 
     QObject::connect(timerControllerUpdate, &QTimer::timeout, [throttleSlider, yawSlider, rollSlider, pitchSlider, killCheck, FS_Check]() {
         throttleValue += throttleAxis;
-        throttleValue = clampInt(throttleValue, 48, 2047);
+        throttleValue = clampDouble(throttleValue , 48, FS_Check->isChecked() ? DSHOT_MAX_FAILSAFE : DSHOT_MAX);
+
         if (!throttleSlider->isSliderDown()){
-            throttleSlider->setValue(throttleValue);
+            throttleSlider->setValue((int)throttleValue + RightTrigger);
         }else{
             throttleValue = throttleSlider->value();
         }
 
         if (!yawSlider->isSliderDown()){
-            yawSlider->setValue(CWRotationTrigger - CCWRotationTrigger);
+            yawSlider->setValue(yawAxis);
         }
 
         if (!rollSlider->isSliderDown()){

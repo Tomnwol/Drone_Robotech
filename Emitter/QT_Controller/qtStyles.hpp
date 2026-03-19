@@ -28,7 +28,7 @@
 #define LOADING_LABEL_STYLE "QCheckBox::indicator:checked { background-color: #555555; border: 1px solid black; }"
 
 
-
+extern QString LABEL_CONTROL_STYLE;
 extern QString FOCUS_PID_STYLE;
 extern QString NORMAL_PID_STYLE;
 

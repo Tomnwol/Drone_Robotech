@@ -77,7 +77,7 @@ void configure_UDP(){
         if (sent != frame.size()) {
             std::cout << "Erreur envoi UDP !" << std::endl;
         }
-        qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
+        //qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
         //std::cout << "[" << timestamp << "] envoi UDP !" << std::endl;
 
     });
