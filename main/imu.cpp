@@ -7,6 +7,8 @@
 
 //#define PI 3.14159265
 Vector3f gyro_offset = {-5, -705, -144};
+Vector3f acce_offset = {240, -120, 0};
+
 
 void qmc5883l_init(void) { // Voir datasheet https://www.qstcorp.com/upload/pdf/202202/%EF%BC%88%E5%B7%B2%E4%BC%A0%EF%BC%8913-52-19%20QMC5883P%20Datasheet%20Rev.C(1).pdf
     // Reset
@@ -67,7 +69,8 @@ Vector3f read_accel() {
     int16_t accel_x = (raw_accel[0] << 8) | raw_accel[1];
     int16_t accel_y = (raw_accel[2] << 8) | raw_accel[3];
     int16_t accel_z = (raw_accel[4] << 8) | raw_accel[5];
-    return (Vector3f){ (float)accel_x, (float)accel_y, (float)accel_z };
+    //Serial.printf("ACCE {%f, %f, %f}\n", (float)(accel_x - acce_offset.x), (float)(accel_y - acce_offset.y), (float)(accel_z  - acce_offset.z));
+    return (Vector3f){ (float)(accel_x - acce_offset.x), (float)(accel_y - acce_offset.y), (float)(accel_z  - acce_offset.z) };
 }
 
 Vector3f read_gyro() {
