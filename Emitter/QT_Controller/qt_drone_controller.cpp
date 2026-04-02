@@ -24,6 +24,8 @@
 #include "qtControllerBox.hpp"
 #include "qtDroneBox.hpp"
 #include "qtStyles.hpp"
+#include "CSV.hpp"
+
 class NoKeyboardSpinBox : public QDoubleSpinBox {
 public:
     using QDoubleSpinBox::QDoubleSpinBox;
@@ -71,6 +73,11 @@ int main(int argc, char *argv[])
 
     initControllerBox(&window, controller);
     initDroneBox();
+
+    if (isLogEnable){
+        initLog();
+    }
+
 
     /* 0.Main Box */
     QGroupBox *mainGroupBox = new QGroupBox("");

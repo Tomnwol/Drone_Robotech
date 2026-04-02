@@ -1,7 +1,7 @@
 #include <QDateTime>
 #include <iostream>
 #include "UDP.hpp"
-
+#include "CSV.hpp"
 QUdpSocket* udpSocket = nullptr;
 QTimer* timer = nullptr;
 
@@ -88,7 +88,6 @@ void configure_UDP(){
 
     // Réception télémétrie
     QObject::connect(udpSocket, &QUdpSocket::readyRead, [=](){
-
         while (udpSocket->hasPendingDatagrams()) {
 
             QByteArray datagram;
@@ -116,6 +115,9 @@ void configure_UDP(){
                 droneMotorFR = (uint16_t)d[9]  | ((uint16_t)d[10] << 8);
                 droneMotorBR = (uint16_t)d[11] | ((uint16_t)d[12] << 8);
                 droneMotorBL = (uint16_t)d[13] | ((uint16_t)d[14] << 8);
+                if (isLogEnable){
+                    writeToCsv(droneMotorFL, droneMotorFR, droneMotorBR, droneMotorBL);
+                }
             }
         }
     });

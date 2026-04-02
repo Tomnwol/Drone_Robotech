@@ -14,7 +14,7 @@ extern int ButtonBackRight;
 extern double throttleAxis;
 extern double throttleValue;
 extern int yawAxis;
-extern int LeftTrigger;
+//extern int LeftTrigger;
 extern int RightTrigger;
 extern int pitchAxis;
 extern int rollAxis;

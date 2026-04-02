@@ -203,7 +203,7 @@ void Controller::readController()
                 case CODE_YAW_AXIS:{
                     double tmpYaw = remapDouble(ev.value, -32768, 32767, -1.0, 1.0);
                     tmpYaw = (tmpYaw/fabs(tmpYaw)) * easeInCirc(fabs(tmpYaw)) * 1000;
-                    yawAxis = (int)tmpYaw;
+                    yawAxis = (int)-tmpYaw;
                     break;
                 }
                 case CODE_LEFT_TRIGGER:
@@ -211,7 +211,7 @@ void Controller::readController()
                     break;
 
                 case CODE_RIGHT_TRIGGER:
-                    RightTrigger = remapInt(ev.value, 0, 1023, 0, 60);
+                    RightTrigger = remapInt(ev.value, 0, 1023, 0, 100);
                     break;
 
                 case CODE_PITCH_AXIS:
